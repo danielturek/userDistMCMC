@@ -1,11 +1,11 @@
 
 library(nimble)
+library(coda)
 source('defs.R')
-
-## load dipper data
 load('dipperData.RData')
-##ind <- 1:2;   nind<-length(ind);   first<-first[ind];   y<-y[ind,,drop=FALSE];   x_init<-x_init[ind,,drop=FALSE]
+##ind <- c(1:20, 250:255);   nind<-length(ind);   first<-first[ind];   y<-y[ind,,drop=FALSE];   x_init<-x_init[ind,,drop=FALSE]
 yDHMM <- 2 - y    ## changes y=1 (alive) to state=1, and y=0 (dead) to state=2
+
 
 ## regular dipper model
 code <- nimbleCode({
@@ -25,27 +25,6 @@ constants <- list(k=k, nind=nind, first=first)
 data      <- list(y=y)
 inits     <- list(phi=0.6, p=0.9, x=x_init)
 
-out <- MCMCsuite(
-    code, constants, data, inits,
-    MCMCs = 'nimble',
-    niter = 100000,
-    makePlot = FALSE
-)
-out$summary
-out$timing
-## , , phi
-##            mean    median         sd  CI95_low  CI95_upp
-## nimble 0.560819 0.5608689 0.02529621 0.5113113 0.6103282
-## , , p
-##             mean    median         sd  CI95_low  CI95_upp
-## nimble 0.8973973 0.8996027 0.02835741 0.8356764 0.9463729
-## > out$timing
-##         nimble nimble_compile 
-##      2.5795667      0.5496667 
-
-
-
-
 
 ## DHMM dipper model
 code <- nimbleCode({
@@ -60,38 +39,62 @@ code <- nimbleCode({
     Z[1, 2] <- 0
     Z[2, 2] <- 1
     for (i in 1:nind) {
-        y[i, first[i]:k] ~ dDHMM(length=k-first[i]+1, pi=pi[1:2], Z=Z[1:2,1:2], T=T[1:2,1:2], condition=condition[1:2])
+        y[i, first[i]:k] ~ dDHMM(length=k-first[i]+1, prior=prior[1:2], Z=Z[1:2,1:2], T=T[1:2,1:2], condition=condition[1:2])
     }
 })
-constants <- list(k=k, nind=nind, first=first, pi=c(1,0), condition=c(1,0))
+constants <- list(k=k, nind=nind, first=first, prior=c(1,0), condition=c(1,0))
 data      <- list(y=yDHMM)
 inits     <- list(phi=0.6, p=0.9)
 
-## testing, delete after here
-Rmodel <- nimbleModel(code, constants, data, inits)
 
-spec <- configureMCMC(Rmodel)
-spec$getSamplers()
-Rmcmc <- buildMCMC(spec)
-
-Cmodel <- compileNimble(Rmodel)
-Cmcmc <- compileNimble(Rmcmc, project = Rmodel)
-
-set.seed(0)
-Cmcmc$run(10000)
-samples <- as.matrix(Cmcmc$mvSamples)
-apply(samples, 2, mean)
-## delete up to here
-
+## MCMC Suite
 out <- MCMCsuite(
     code, constants, data, inits,
     MCMCs = 'nimble',
     niter = 100000,
+    summaryStats = c('mean', 'median', 'sd', 'CI95_low', 'CI95_upp', 'effectiveSize'),
     makePlot = FALSE
 )
-out$summary
-out$timing
 
+## output
+out$timing
+out$summary[, c('mean','sd','CI95_low','CI95_upp'), ]
+out$summary[, 'effectiveSize', ]
+out$summary[, 'effectiveSize', ] / out$timing['nimble']
+
+## regular dipper MCMC
+## > out$timing
+##         nimble nimble_compile 
+##         2.5737         0.5617 
+## > out$summary[, c('mean','sd','CI95_low','CI95_upp'), ]
+##                 phi          p
+## mean     0.56124176 0.89709195
+## sd       0.02499421 0.02882952
+## CI95_low 0.51215809 0.83408893
+## CI95_upp 0.61001026 0.94655026
+## > out$summary[, 'effectiveSize', ]
+##       phi         p 
+## 14637.710  6632.726 
+## > out$summary[, 'effectiveSize', ] / out$timing['nimble']
+##      phi        p 
+## 5687.419 2577.117 
+
+## using dDHMM
+## > out$timing
+##         nimble nimble_compile 
+##       4.376767       0.173100 
+## > out$summary[, c('mean','sd','CI95_low','CI95_upp'), ]
+##                phi          p
+## mean     0.5612347 0.89571264
+## sd       0.0249737 0.02895505
+## CI95_low 0.5125123 0.83314978
+## CI95_upp 0.6098984 0.94551182
+## > out$summary[, 'effectiveSize', ]
+##      phi        p 
+## 19435.81 18234.94 
+## > out$summary[, 'effectiveSize', ] / out$timing['nimble']
+##      phi        p 
+## 4440.677 4166.305 
 
 
 
