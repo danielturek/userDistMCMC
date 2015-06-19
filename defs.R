@@ -1,49 +1,50 @@
 
 
 dDHMM <- nimbleFunction(
-    run = function(x = double(1), length = double(), prior = double(1), Z = double(2), T = double(2), condition = double(1), log.p = double()) {
+    run = function(x = double(1),
+        length = double(), prior = double(1), condition = double(1),
+        Z = double(2), Zt = double(3), useZt = double(),
+        T = double(2), Tt = double(3), useTt = double(),
+        log.p = double()) {
         verb <- 0
         pi <- prior / sum(prior)    ## normalize prior, assume no negative values
-        if(verb) { print('initial pi:');  print(pi) }
+        if(verb) { print('initial pi:'); print(pi) }
         logL <- 0
         for(t in 1:length) {
             if(verb) { print('**************************************')
                        print('t: ', t)
-                       print('pi entering into this iteration:');  print(pi) }
-            if(t == 1) {
-                ## conditioning on first observation
-                Zcond <- Z
-                for(i in 1:dim(Zcond)[1])
-                    ## for(j in 1:dim(Zcond)[2])
-                    ##     Zcond[i,j] <- Zcond[i,j] * condition[i]
-                    Zcond[i, ] <- Zcond[i, ] * condition[i]
-                for(j in 1:dim(Zcond)[2]) {
-                    s <- sum(Zcond[ ,j])
-                    if(s != 0)
-                        ## for(i in 1:dim(Zcond)[1])
-                        ##     Zcond[i,j] <- Zcond[i,j] / s
-                        Zcond[ ,j] <- Zcond[ ,j] / s
+                       print('pi entering into this iteration:'); print(pi) }
+            if(useZt) Zcurrent <- Zt[,,t] else Zcurrent <- Z
+            if(t == 1) {    ## condition on first observation
+                for(i in 1:dim(Zcurrent)[1])
+                    Zcurrent[i, ] <- Zcurrent[i, ] * condition[i]
+                for(j in 1:dim(Zcurrent)[2]) {
+                    s <- sum(Zcurrent[ ,j])
+                    if(s != 0) Zcurrent[ ,j] <- Zcurrent[ ,j] / s
                 }
-                if(verb) { print('Zcond:');  print(Zcond) }
-                Zpi <- Zcond[x[t], ] * pi
-            } else
-                Zpi <- Z[x[t], ] * pi
-            if(verb) { print('Zpi:');   print(Zpi) }
+            }
+            Zpi <- Zcurrent[x[t], ] * pi
             sumZpi <- sum(Zpi)
             logL <- logL + log(sumZpi)
-            pi <- (T %*% asCol(Zpi) / sumZpi)[, 1]
-            if(verb) { print('likelihood contribution: ', sumZpi)
-                       print('updated pi exiting this iteration:');   print(pi)
+            if(useTt) Tcurrent <- Tt[,,t] else Tcurrent <- T
+            pi <- (Tcurrent %*% asCol(Zpi) / sumZpi)[, 1]
+            if(verb) { print('Zcurrent:'); print(Zcurrent)
+                       print('Zpi:'); print(Zpi)
+                       print('likelihood contribution: ', sumZpi)
+                       print('updated pi exiting this iteration:'); print(pi)
                        print('**************************************') }
         }
         returnType(double())
-        if(log.p != 0) return(logL) else return(exp(logL))
+        if(log.p) return(logL) else return(exp(logL))
     }
 )
 
 
 rDHMM <- nimbleFunction(
-    run = function(n = integer(), length = double(), prior = double(1), Z = double(2), T = double(2), condition = double(1)) {
+    run = function(n = integer(),
+        length = double(), prior = double(1), condition = double(1),
+        Z = double(2), Zt = double(3), useZt = double(),
+        T = double(2), Tt = double(3), useTt = double()) {
         if(n != 1) print('should only specify n=1 in rDHMM() distribution')
         print('STILL NEED TO WRITE THE rDHMM() METHOD!')
         returnType(double(1))
@@ -54,8 +55,11 @@ rDHMM <- nimbleFunction(
 
 registerDistributions(list(
     dDHMM = list(
-        BUGSdist = 'dDHMM(length, prior, Z, T, condition)',
-        types    = c('value = double(1)', 'length = double()', 'prior = double(1)', 'Z = double(2)', 'T = double(2)', 'condition = double(1)'),
+        BUGSdist = 'dDHMM(length, prior, condition, Z, Zt, useZt, T, Tt, useTt)',
+        types    = c('value = double(1)',
+            'length = double()', 'prior = double(1)', 'condition = double(1)',
+            'Z = double(2)', 'Zt = double(3)', 'useZt = double()',
+            'T = double(2)', 'Tt = double(3)', 'useTt = double()'),
         discrete = TRUE
     )
 ))

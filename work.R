@@ -3,7 +3,7 @@ library(nimble)
 library(coda)
 source('defs.R')
 load('dipperData.RData')
-##ind <- c(1:20, 250:255);   nind<-length(ind);   first<-first[ind];   y<-y[ind,,drop=FALSE];   x_init<-x_init[ind,,drop=FALSE]
+##ind <- c(1:3);   nind<-length(ind);   first<-first[ind];   y<-y[ind,,drop=FALSE];   x_init<-x_init[ind,,drop=FALSE]
 yDHMM <- 2 - y    ## changes y=1 (alive) to state=1, and y=0 (dead) to state=2
 
 
@@ -38,11 +38,12 @@ code <- nimbleCode({
     Z[2, 1] <- 1 - p
     Z[1, 2] <- 0
     Z[2, 2] <- 1
-    for (i in 1:nind) {
-        y[i, first[i]:k] ~ dDHMM(length=k-first[i]+1, prior=prior[1:2], Z=Z[1:2,1:2], T=T[1:2,1:2], condition=condition[1:2])
-    }
+    for (i in 1:nind)
+        y[i, first[i]:k] ~ dDHMM(length=k-first[i]+1, prior=prior[1:2], condition=condition[1:2],
+                                 Z=Z[1:2,1:2], Zt=Zt[1:2,1:2,1:2], useZt=0,
+                                 T=T[1:2,1:2], Tt=Tt[1:2,1:2,1:2], useTt=0)
 })
-constants <- list(k=k, nind=nind, first=first, prior=c(1,0), condition=c(1,0))
+constants <- list(k=k, nind=nind, first=first, prior=c(1,0), condition=c(1,0), Zt=array(0,c(2,2,2)), Tt=array(0,c(2,2,2)))
 data      <- list(y=yDHMM)
 inits     <- list(phi=0.6, p=0.9)
 
@@ -97,6 +98,58 @@ out$summary[, 'effectiveSize', ] / out$timing['nimble']
 ## 4440.677 4166.305 
 
 
+
+
+## dipper with seasonal variation in phi (flood, non-flood)
+code <- nimbleCode({
+    phi_flood ~ dunif(0,1)
+    phi_non   ~ dunif(0,1)
+    p         ~ dunif(0,1)
+    Tt[1, 1, 1] <- phi_non
+    Tt[2, 1, 1] <- 1 - phi_non
+    for(i in 2:3) {
+        Tt[1, 1, i] <- phi_flood
+        Tt[2, 1, i] <- 1 - phi_flood
+    }
+    for(i in 4:6) {
+        Tt[1, 1, i] <- phi_non
+        Tt[2, 1, i] <- 1 - phi_non
+    }
+    Tt[1, 1, 7] <- 1
+    Tt[2, 1, 7] <- 0
+    for(i in 1:7) {
+        Tt[1, 2, i] <- 0
+        Tt[2, 2, i] <- 1
+    }
+    Z[1, 1] <- p
+    Z[2, 1] <- 1 - p
+    Z[1, 2] <- 0
+    Z[2, 2] <- 1
+    for (i in 1:nind)
+        y[i, first[i]:k] ~ dDHMM(length=k-first[i]+1, prior=prior[1:2], condition=condition[1:2],
+                                 Z=Z[1:2,1:2], Zt=Zt[1:2,1:2,1:2],        useZt=0,
+                                 T=T[1:2,1:2], Tt=Tt[1:2,1:2,first[i]:k], useTt=1)
+})
+constants <- list(k=k, nind=nind, first=first, prior=c(1,0), condition=c(1,0), Zt=array(0,c(2,2,2)), T=array(0,c(2,2)))
+data      <- list(y=yDHMM)
+inits     <- list(phi_flood=0.6, phi_non=0.6, p=0.9)
+
+## seasonal model using dDHMM
+## > out$timing
+##         nimble nimble_compile 
+##      6.1903167      0.2175833 
+## > out$summary[, c('mean','sd','CI95_low','CI95_upp'), ]
+##           phi_flood    phi_non          p
+## mean     0.47028532 0.60885386 0.89211450
+## sd       0.04299001 0.03098627 0.02973024
+## CI95_low 0.38647056 0.54783431 0.82784713
+## CI95_upp 0.55580204 0.66898877 0.94310972
+## > out$summary[, 'effectiveSize', ]
+## phi_flood   phi_non         p 
+##  21666.88  18643.64  17404.35 
+## > out$summary[, 'effectiveSize', ] / out$timing['nimble']
+## phi_flood   phi_non         p 
+##  3500.125  3011.742  2811.544 
 
 
 
