@@ -2,67 +2,10 @@
 library(nimble)
 library(coda)
 source('defs.R')
-load('dipperData.RData')
-##ind <- c(1:3);   nind<-length(ind);   first<-first[ind];   y<-y[ind,,drop=FALSE];   x_init<-x_init[ind,,drop=FALSE]
-yDHMM <- 2 - y    ## changes y=1 (alive) to state=1, and y=0 (dead) to state=2
+source('create_data.R')
+load('models.RData')
 
-
-## regular dipper model
-code <- nimbleCode({
-    phi ~ dunif(0, 1)
-    p ~ dunif(0, 1)
-    for (i in 1:nind) {
-        x[i, first[i]] <- 1
-        for (t in (first[i] + 1):k) {
-            mu_x[i, t] <- phi * x[i, t-1]
-            mu_y[i, t] <- p * x[i, t]
-            x[i, t] ~ dbin(mu_x[i, t], 1)
-            y[i, t] ~ dbin(mu_y[i, t], 1)
-        }
-    }
-})
-constants <- list(k=k, nind=nind, first=first)
-data      <- list(y=y)
-inits     <- list(phi=0.6, p=0.9, x=x_init)
-
-
-## DHMM dipper model
-code <- nimbleCode({
-    phi ~ dunif(0, 1)
-    p ~ dunif(0, 1)
-    T[1, 1] <- phi
-    T[2, 1] <- 1 - phi
-    T[1, 2] <- 0
-    T[2, 2] <- 1
-    Z[1, 1] <- p
-    Z[2, 1] <- 1 - p
-    Z[1, 2] <- 0
-    Z[2, 2] <- 1
-    for (i in 1:nind)
-        y[i, first[i]:k] ~ dDHMM(length=k-first[i]+1, prior=prior[1:2], condition=condition[1:2],
-                                 Z=Z[1:2,1:2], Zt=Zt[1:2,1:2,1:2], useZt=0,
-                                 T=T[1:2,1:2], Tt=Tt[1:2,1:2,1:2], useTt=0)
-})
-constants <- list(k=k, nind=nind, first=first, prior=c(1,0), condition=c(1,0), Zt=array(0,c(2,2,2)), Tt=array(0,c(2,2,2)))
-data      <- list(y=yDHMM)
-inits     <- list(phi=0.6, p=0.9)
-
-
-## MCMC Suite
-out <- MCMCsuite(
-    code, constants, data, inits,
-    MCMCs = 'nimble',
-    niter = 100000,
-    summaryStats = c('mean', 'median', 'sd', 'CI95_low', 'CI95_upp', 'effectiveSize'),
-    makePlot = FALSE
-)
-
-## output
-out$timing
-out$summary[, c('mean','sd','CI95_low','CI95_upp'), ]
-out$summary[, 'effectiveSize', ]
-out$summary[, 'effectiveSize', ] / out$timing['nimble']
-
+run_suite(dipper, niter=5000)
 ## regular dipper MCMC
 ## > out$timing
 ##         nimble nimble_compile 
@@ -80,6 +23,7 @@ out$summary[, 'effectiveSize', ] / out$timing['nimble']
 ##      phi        p 
 ## 5687.419 2577.117 
 
+run_suite(dipperDHMM)
 ## using dDHMM
 ## > out$timing
 ##         nimble nimble_compile 
@@ -97,43 +41,7 @@ out$summary[, 'effectiveSize', ] / out$timing['nimble']
 ##      phi        p 
 ## 4440.677 4166.305 
 
-
-
-
-## dipper with seasonal variation in phi (flood, non-flood)
-code <- nimbleCode({
-    phi_flood ~ dunif(0,1)
-    phi_non   ~ dunif(0,1)
-    p         ~ dunif(0,1)
-    Tt[1, 1, 1] <- phi_non
-    Tt[2, 1, 1] <- 1 - phi_non
-    for(i in 2:3) {
-        Tt[1, 1, i] <- phi_flood
-        Tt[2, 1, i] <- 1 - phi_flood
-    }
-    for(i in 4:6) {
-        Tt[1, 1, i] <- phi_non
-        Tt[2, 1, i] <- 1 - phi_non
-    }
-    Tt[1, 1, 7] <- 1
-    Tt[2, 1, 7] <- 0
-    for(i in 1:7) {
-        Tt[1, 2, i] <- 0
-        Tt[2, 2, i] <- 1
-    }
-    Z[1, 1] <- p
-    Z[2, 1] <- 1 - p
-    Z[1, 2] <- 0
-    Z[2, 2] <- 1
-    for (i in 1:nind)
-        y[i, first[i]:k] ~ dDHMM(length=k-first[i]+1, prior=prior[1:2], condition=condition[1:2],
-                                 Z=Z[1:2,1:2], Zt=Zt[1:2,1:2,1:2],        useZt=0,
-                                 T=T[1:2,1:2], Tt=Tt[1:2,1:2,first[i]:k], useTt=1)
-})
-constants <- list(k=k, nind=nind, first=first, prior=c(1,0), condition=c(1,0), Zt=array(0,c(2,2,2)), T=array(0,c(2,2)))
-data      <- list(y=yDHMM)
-inits     <- list(phi_flood=0.6, phi_non=0.6, p=0.9)
-
+run_suite(dipperSeasonalDHMM)
 ## seasonal model using dDHMM
 ## > out$timing
 ##         nimble nimble_compile 
@@ -152,10 +60,58 @@ inits     <- list(phi_flood=0.6, phi_non=0.6, p=0.9)
 ##  3500.125  3011.742  2811.544 
 
 
-
-
-
-
-
+run_suite(goose, monitors = c('p','phi','psi'))
+##         nimble nimble_compile 
+##     27.6496000      0.3303333 
+##                p[1]       p[2]      p[3]       p[4]       p[5]       p[6]
+## mean     0.42715193 0.45563780 0.2833422 0.45934025 0.42015242 0.47014886
+## sd       0.02029276 0.01410567 0.0200672 0.04522447 0.02465373 0.07237628
+## CI95_low 0.38792095 0.42840758 0.2459783 0.37896465 0.37473458 0.35158230
+## CI95_upp 0.46748470 0.48327627 0.3244012 0.55570623 0.47083479 0.63361899
+##              phi[1]     phi[2]     phi[3] psi[1, 1, 1] psi[2, 1, 1]
+## mean     0.63286405 0.64787790 0.64185580   0.68460442   0.30456688
+## sd       0.01466046 0.01168515 0.02330258   0.01685344   0.01673475
+## CI95_low 0.60455830 0.62539435 0.59698688   0.65073529   0.27275507
+## CI95_upp 0.66206399 0.67122297 0.68766532   0.71677899   0.33808181
+##          psi[3, 1, 1] psi[1, 2, 1] psi[2, 2, 1] psi[3, 2, 1] psi[1, 3, 1]
+## mean      0.010828693  0.125163753   0.83086195   0.04397429  0.043311360
+## sd        0.003474096  0.009357463   0.01117905   0.00598216  0.008177315
+## CI95_low  0.005122025  0.107551032   0.80830682   0.03306107  0.028822045
+## CI95_upp  0.018477155  0.144299949   0.85194058   0.05672934  0.060850289
+##          psi[2, 3, 1] psi[3, 3, 1] psi[1, 1, 2] psi[2, 1, 2] psi[3, 1, 2]
+## mean       0.20139469   0.75529395   0.69528792    0.2997723 0.0049397692
+## sd         0.01799692   0.01922325   0.03952898    0.0392892 0.0038169140
+## CI95_low   0.16765740   0.71653000   0.61190267    0.2290285 0.0005120229
+## CI95_upp   0.23828530   0.79187595   0.76649229    0.3823710 0.0149325323
+##          psi[1, 2, 2] psi[2, 2, 2] psi[3, 2, 2] psi[1, 3, 2] psi[2, 3, 2]
+## mean       0.15056380   0.83093269  0.018503507   0.05504918    0.4189732
+## sd         0.02097931   0.02224959  0.005633057   0.01392204    0.0488106
+## CI95_low   0.11291114   0.78369141  0.009329127   0.03153770    0.3302138
+## CI95_upp   0.19559843   0.87091157  0.031228619   0.08581457    0.5209931
+##          psi[3, 3, 2]
+## mean       0.52597761
+## sd         0.05066454
+## CI95_low   0.42067908
+## CI95_upp   0.61844019
+##         p[1]         p[2]         p[3]         p[4]         p[5]         p[6] 
+##    4371.5361    4305.7001    3290.0269    2334.6215    2224.4919    1385.2670 
+##       phi[1]       phi[2]       phi[3] psi[1, 1, 1] psi[2, 1, 1] psi[3, 1, 1] 
+##    4313.1360    4236.2488    2150.9595    6366.2184    6086.5339     425.5489 
+## psi[1, 2, 1] psi[2, 2, 1] psi[3, 2, 1] psi[1, 3, 1] psi[2, 3, 1] psi[3, 3, 1] 
+##    7869.7339    6108.1184    2359.6626   16012.8453    7442.8635    7007.4839 
+## psi[1, 1, 2] psi[2, 1, 2] psi[3, 1, 2] psi[1, 2, 2] psi[2, 2, 2] psi[3, 2, 2] 
+##    3262.9833    3284.9732     370.4055    2773.5454    2613.8002    1009.5867 
+## psi[1, 3, 2] psi[2, 3, 2] psi[3, 3, 2] 
+##    6129.3237    1764.1641    1701.3560 
+##         p[1]         p[2]         p[3]         p[4]         p[5]         p[6] 
+##    158.10486    155.72378    118.99004     84.43600     80.45295     50.10080 
+##       phi[1]       phi[2]       phi[3] psi[1, 1, 1] psi[2, 1, 1] psi[3, 1, 1] 
+##    155.99271    153.21194     77.79351    230.24631    220.13099     15.39078 
+## psi[1, 2, 1] psi[2, 2, 1] psi[3, 2, 1] psi[1, 3, 1] psi[2, 3, 1] psi[3, 3, 1] 
+##    284.62379    220.91164     85.34165    579.13479    269.18521    253.43889 
+## psi[1, 1, 2] psi[2, 1, 2] psi[3, 1, 2] psi[1, 2, 2] psi[2, 2, 2] psi[3, 2, 2] 
+##    118.01195    118.80726     13.39641    100.31051     94.53302     36.51361 
+## psi[1, 3, 2] psi[2, 3, 2] psi[3, 3, 2] 
+##    221.67857     63.80433     61.53275 
 
 
