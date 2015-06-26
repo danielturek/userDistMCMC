@@ -5,8 +5,8 @@
 
 load('~/GitHub/legacy/dipper/dipperData.RData')
 ## optionally truncate data:
-if(trunc) { ind <- c(1:3);   nind<-length(ind);   first<-first[ind];   y<-y[ind,,drop=FALSE];   yDHMM<-yDHMM[ind,,drop=FALSE];   x_init<-x_init[ind,,drop=FALSE] }
 yDHMM <- 2 - y
+if(trunc) { ind <- c(1:3);   nind<-length(ind);   first<-first[ind];   y<-y[ind,,drop=FALSE];   yDHMM<-yDHMM[ind,,drop=FALSE];   x_init<-x_init[ind,,drop=FALSE] }
 
 ## dipper (with latent states, suitable for jags)
 code <- quote({
@@ -56,6 +56,13 @@ inits     <- list(phi=0.6, p=0.9)
 dipperDHMM <- list(code=code, constants=constants, data=data, inits=inits)
 
 
+
+
+
+
+############################
+## goose
+############################
 
 
 
@@ -377,7 +384,7 @@ mult <- c(
     3,
     13)
 ## optional truncate:
-if(trunc) { ind <- 1:10;     y<-y[ind,];     mult<-mult[ind] }
+if(trunc) { ind <- 1:5;     y<-y[ind,];     mult<-mult[ind] }
 first <- apply(y, 1, function(hist) which(hist!=0)[1])
 nind <- dim(y)[1]
 k <- dim(y)[2]
@@ -478,12 +485,18 @@ gooseDHMM <- list(code=code, constants=constants, data=data, inits=inits)
 
 
 
+############################
+## orchid
+############################
+
+
+
 ## orchid (multistate, from Kery & Schaub, uses stochastic indexing => jags only!)
 ## (9.7. Real data example: the showy lady's slipper)
-run_orchid_JAGS <- function(niter = 100000, trunc = FALSE) {
+orchidJAGSfunction <- function(niter = 100000) {
     CH <- as.matrix(read.table("~/GitHub/userDistMCMC/orchids.txt", sep=" ", header = FALSE))
     ## optionally truncate data:
-    if(trunc) {     ind <- 1:10;     CH <- CH[ind,]     }
+    if(trunc) {     ind <- 1:5;     CH <- CH[ind,]     }
     n_occasions <- dim(CH)[2]
     ## Compute vector with occasion of first capture 
     f <- numeric() 
@@ -621,16 +634,16 @@ model {
     for(iStat in seq_along(summaryStats)) {
         summaryArray[iStat, ] <- apply(ar, 2, summaryStatFunctions[[iStat]])
     }
-    message('> timing:')
     theTime <- as.numeric(t[3] / 60)    ## this is consistent with MCMCsuite
-    print(theTime)
-    message('> summary statistics:')
-    print(summaryArray[c('mean','sd','CI95_low','CI95_upp'), ])
-    message('> effectiveSize:')
-    print(summaryArray['effectiveSize', ])
-    message('> effectiveSize / timing:')
-    print(summaryArray['effectiveSize', ] / theTime)
-    return(invisible(NULL))
+    ## message('> timing:')
+    ## print(theTime)
+    ## message('> summary statistics:')
+    ## print(summaryArray[c('mean','sd','CI95_low','CI95_upp'), ])
+    ## message('> effectiveSize:')
+    ## print(summaryArray['effectiveSize', ])
+    ## message('> effectiveSize / timing:')
+    ## print(summaryArray['effectiveSize', ] / theTime)
+    list(theTime=theTime, summary=summaryArray)
 }
 
 
@@ -658,8 +671,8 @@ code <- quote({
     ## -------------------------------------------------
     ## Priors and constraints 
     ## Survival: uniform 
-    for (t in 1:k){  
-        s[t] ~ dunif(0, 1) 
+    for (t in 1:(k-1)){  
+        s[t] ~ dunif(0, 1)
     }
     ## Transitions: gamma priors 
     for (i in 1:3){
@@ -671,7 +684,7 @@ code <- quote({
         psiF[i] <- c[i]/sum(c[1:3]) 
     }
     ## Define state-transition and observation matrices 	
-    for (t in 1:k) {
+    for (t in 1:(k-1)) {
         T[1,1,t] <- s[t] * psiV[1]
         T[2,1,t] <- s[t] * psiV[2]
         T[3,1,t] <- s[t] * psiV[3]
@@ -689,6 +702,22 @@ code <- quote({
         T[3,4,t] <- 0
         T[4,4,t] <- 1
     }
+    T[1,1,k] <- 1
+    T[2,1,k] <- 0
+    T[3,1,k] <- 0
+    T[4,1,k] <- 0
+    T[1,2,k] <- 0
+    T[2,2,k] <- 1
+    T[3,2,k] <- 0
+    T[4,2,k] <- 0
+    T[1,3,k] <- 0
+    T[2,3,k] <- 0
+    T[3,3,k] <- 1
+    T[4,3,k] <- 0
+    T[1,4,k] <- 0
+    T[2,4,k] <- 0
+    T[3,4,k] <- 0
+    T[4,4,k] <- 1
     ## Likelihood 
     for (i in 1:nind) {
         y[i, f[i]:k] ~ dDHMM(length=k-f[i]+1,
@@ -706,7 +735,7 @@ f <- numeric()
 for (i in 1:dim(CH)[1])     f[i] <- min(which(CH[i,]!=0))
 CH <- CH[which(f!=11), ]  ## remove all individuals not seen until the last occasion:
 ## optionally truncate data:
-if(trunc) {     ind <- 1:10;     CH <- CH[ind,]     }
+if(trunc) {     ind <- 1:5;     CH <- CH[ind,]     }
 rCH <- CH  # Recoded CH 
 rCH[rCH==0] <- 3
 nind <- dim(rCH)[1]
@@ -716,9 +745,10 @@ for (i in 1:dim(CH)[1])     f[i] <- min(which(CH[i,]!=0))
 Z <- array(c(1,0,0,0,1,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0), c(3,4,2))
 constants <- list(f=f, k=k, nind=nind, prior=c(1/3,1/3,1/3,0), condition=c(1,1,0), mult=rep(1,nind), Z=Z)
 data <- list(y = rCH)
-inits <- list(s = rep(1/2,k), a = rep(1,3), b = rep(1,3), c = rep(1,3))
+inits <- list(s = rep(1/2,k-1), a = rep(1,3), b = rep(1,3), c = rep(1,3))
 
 orchidDHMM <- list(code=code, constants=constants, data=data, inits=inits)
+
 
 
 
@@ -729,7 +759,7 @@ save(dipper,
      dipperDHMM,
      ##dipperSeasonalDHMM,
      gooseDHMM,
-     run_orchid_JAGS,
+     orchidJAGSfunction,
      orchidDHMM,
      file = '~/GitHub/userDistMCMC/models.RData')
 
