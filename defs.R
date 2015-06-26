@@ -71,22 +71,22 @@ registerDistributions(list(
 
 
 ## MCMC Suite
-run_suite <- function(lst, monitors=character(), niter=100000) {
+run_suite <- function(lst, monitors=character(), niter=100000, MCMCs='nimble') {
     out <- MCMCsuite(
         lst$code, lst$constants, lst$data, lst$inits,
-        MCMCs = 'nimble',
+        MCMCs = MCMCs,
         niter = niter,
         monitors = monitors,
         summaryStats = c('mean', 'median', 'sd', 'CI95_low', 'CI95_upp', 'effectiveSize'),
         makePlot = FALSE)
+    message('> timing:')
     print(out$timing)
+    message('> summary statistics:')
     print(out$summary[, c('mean','sd','CI95_low','CI95_upp'), ])
+    message('> effectiveSize:')
     print(out$summary[, 'effectiveSize', ])
+    message('> effectiveSize / timing:')
     print(out$summary[, 'effectiveSize', ] / out$timing['nimble'])
     return(invisible(out))
 }
-
-
-
-
 

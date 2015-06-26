@@ -1,29 +1,41 @@
 
+trunc <- FALSE
 library(nimble)
 library(coda)
+setwd('~/GitHub/userDistMCMC')
 source('defs.R')
 source('create_data.R')
 load('models.RData')
 
-run_suite(dipper, niter=5000)
-## regular dipper MCMC
-## > out$timing
-##         nimble nimble_compile 
-##         2.5737         0.5617 
-## > out$summary[, c('mean','sd','CI95_low','CI95_upp'), ]
-##                 phi          p
-## mean     0.56124176 0.89709195
-## sd       0.02499421 0.02882952
-## CI95_low 0.51215809 0.83408893
-## CI95_upp 0.61001026 0.94655026
-## > out$summary[, 'effectiveSize', ]
-##       phi         p 
-## 14637.710  6632.726 
-## > out$summary[, 'effectiveSize', ] / out$timing['nimble']
-##      phi        p 
-## 5687.419 2577.117 
+out <- run_suite(dipper, MCMCs = c('nimble', 'nimble_slice', 'jags'))
+## jags slice samples phi & p, and x's using finite discrete CDF inversion
+## > timing:
+##         nimble   nimble_slice           jags nimble_compile 
+##       2.622750       3.308883       3.768983       0.742700 
+## > summary statistics:
+## , , phi
+##                   mean         sd  CI95_low  CI95_upp
+## nimble       0.5608857 0.02522107 0.5115937 0.6098241
+## nimble_slice 0.5610758 0.02515677 0.5118826 0.6103915
+## jags         0.5617272 0.02511612 0.5122419 0.6107405
+## , , p
+##                   mean         sd  CI95_low  CI95_upp
+## nimble       0.8971970 0.02860018 0.8350529 0.9467355
+## nimble_slice 0.8970705 0.02874215 0.8345340 0.9465203
+## jags         0.8957583 0.02871763 0.8339514 0.9453383
+## > effecticeSize:
+##                   phi         p
+## nimble       15373.05  6739.781
+## nimble_slice 43145.78 14025.666
+## jags         39566.52 17883.916
+## > effectiveSize / timing:
+##                    phi        p
+## nimble        5861.423 2569.738
+## nimble_slice 16450.589 5347.695
+## jags         15085.892 6818.765
 
-run_suite(dipperDHMM)
+
+out <- run_suite(dipperDHMM)
 ## using dDHMM
 ## > out$timing
 ##         nimble nimble_compile 
@@ -41,26 +53,169 @@ run_suite(dipperDHMM)
 ##      phi        p 
 ## 4440.677 4166.305 
 
-run_suite(dipperSeasonalDHMM)
-## seasonal model using dDHMM
-## > out$timing
-##         nimble nimble_compile 
-##      6.1903167      0.2175833 
-## > out$summary[, c('mean','sd','CI95_low','CI95_upp'), ]
-##           phi_flood    phi_non          p
-## mean     0.47028532 0.60885386 0.89211450
-## sd       0.04299001 0.03098627 0.02973024
-## CI95_low 0.38647056 0.54783431 0.82784713
-## CI95_upp 0.55580204 0.66898877 0.94310972
-## > out$summary[, 'effectiveSize', ]
-## phi_flood   phi_non         p 
-##  21666.88  18643.64  17404.35 
-## > out$summary[, 'effectiveSize', ] / out$timing['nimble']
-## phi_flood   phi_non         p 
-##  3500.125  3011.742  2811.544 
 
 
-run_suite(goose, monitors = c('p','phi','psi'))
+run_orchid_JAGS(trunc = trunc)
+## > timing:
+## [1] 47.03898
+## > summary statistics:
+##            psiD[1]    psiD[2]    psiD[3]    psiF[1]    psiF[2]     psiF[3]
+## mean     0.5531034 0.17213096 0.27476561 0.18226816 0.80389707 0.013834775
+## sd       0.1001487 0.06985236 0.09796552 0.01826261 0.01883763 0.005853463
+## CI95_low 0.3541799 0.05957141 0.11013930 0.14777074 0.76571028 0.004730903
+## CI95_upp 0.7416574 0.32942762 0.48921773 0.21936875 0.83945050 0.027358049
+##             psiV[1]   psiV[2]     psiV[3]       s[1]       s[2]       s[3]
+## mean     0.82839076 0.1524586 0.019150613 0.98391320 0.88993828 0.94946177
+## sd       0.01177856 0.0111110 0.004693027 0.01246521 0.02394097 0.01768629
+## CI95_low 0.80472446 0.1313443 0.011064544 0.95239897 0.83900753 0.90979278
+## CI95_upp 0.85079796 0.1748218 0.029402368 0.99901336 0.93239199 0.97844525
+##                s[4]       s[5]      s[6]       s[7]       s[8]       s[9]
+## mean     0.95748296 0.95026443 0.9507973 0.92841163 0.96530386 0.92448548
+## sd       0.01614609 0.01758637 0.0174093 0.02032233 0.01525913 0.02168774
+## CI95_low 0.92081081 0.91084007 0.9116393 0.88383987 0.93044920 0.87736495
+## CI95_upp 0.98345899 0.97889410 0.9792454 0.96319295 0.98933060 0.96178777
+##               s[10]
+## mean     0.98203143
+## sd       0.01275695
+## CI95_low 0.95150005
+## CI95_upp 0.99900042
+## > effectiveSize:
+##   psiD[1]   psiD[2]   psiD[3]   psiF[1]   psiF[2]   psiF[3]   psiV[1]   psiV[2] 
+##  7011.909 23163.520  4470.530 81919.800 80345.375 29395.209 55714.025 68901.087 
+##   psiV[3]      s[1]      s[2]      s[3]      s[4]      s[5]      s[6]      s[7] 
+## 13841.858 25779.147 51935.321 43269.655 43726.882 41448.170 43015.012 42745.548 
+##      s[8]      s[9]     s[10] 
+## 18412.649 21689.366 21540.667 
+## > effectiveSize / timing:
+##    psiD[1]    psiD[2]    psiD[3]    psiF[1]    psiF[2]    psiF[3]    psiV[1] 
+##  149.06592  492.43242   95.03883 1741.52999 1708.05934  624.91166 1184.42239 
+##    psiV[2]    psiV[3]       s[1]       s[2]       s[3]       s[4]       s[5] 
+## 1464.76566  294.26356  548.03794 1104.09106  919.86799  929.58816  881.14511 
+##       s[6]       s[7]       s[8]       s[9]      s[10] 
+##  914.45454  908.72601  391.43382  461.09343  457.93224 
+
+
+
+
+
+## orchidDHMM (multistate, from Kery & Schaub, y[i] ~ dDHMM(...) for nimble only)
+## (9.7. Real data example: the showy lady's slipper)
+out <- run_suite(orchidDHMM, monitors=c('s','psiV','psiF','psiD'), MCMCs=c('nimble','nimble_slice'))
+> timing:
+        nimble   nimble_slice nimble_compile 
+    59.1068667    302.7952167      0.3781333 
+## > summary statistics:
+## , , s[1]
+##                   mean         sd  CI95_low  CI95_upp
+## nimble       0.9838825 0.01243828 0.9527076 0.9990156
+## nimble_slice 0.9838622 0.01245641 0.9523106 0.9990397
+## , , s[2]
+##                   mean         sd  CI95_low  CI95_upp
+## nimble       0.8897056 0.02408753 0.8381650 0.9325154
+## nimble_slice 0.8897270 0.02412690 0.8384471 0.9326868
+## , , s[3]
+##                   mean         sd  CI95_low  CI95_upp
+## nimble       0.9493956 0.01797781 0.9091746 0.9786740
+## nimble_slice 0.9494116 0.01783601 0.9094817 0.9784444
+## , , s[4]
+##                   mean         sd  CI95_low  CI95_upp
+## nimble       0.9575415 0.01611296 0.9211120 0.9835168
+## nimble_slice 0.9575154 0.01610973 0.9209369 0.9834212
+## , , s[5]
+##                   mean         sd  CI95_low  CI95_upp
+## nimble       0.9502392 0.01748291 0.9110601 0.9788623
+## nimble_slice 0.9503184 0.01763561 0.9106377 0.9790675
+## , , s[6]
+##                   mean         sd  CI95_low  CI95_upp
+## nimble       0.9508749 0.01763376 0.9109392 0.9795094
+## nimble_slice 0.9508776 0.01745691 0.9114753 0.9795320
+## , , s[7]
+##                   mean         sd  CI95_low  CI95_upp
+## nimble       0.9283512 0.02027069 0.8836015 0.9628795
+## nimble_slice 0.9284583 0.02030488 0.8839125 0.9628820
+## , , s[8]
+##                   mean         sd  CI95_low  CI95_upp
+## nimble       0.9653028 0.01507306 0.9308245 0.9891671
+## nimble_slice 0.9653653 0.01508108 0.9307666 0.9891502
+## , , s[9]
+##                   mean         sd  CI95_low  CI95_upp
+## nimble       0.9243267 0.02142635 0.8777447 0.9613402
+## nimble_slice 0.9243718 0.02155435 0.8773788 0.9615339
+## , , s[10]
+##                   mean         sd  CI95_low  CI95_upp
+## nimble       0.9819759 0.01287262 0.9509386 0.9990055
+## nimble_slice 0.9819363 0.01279911 0.9512063 0.9989739
+## , , s[11]
+##                   mean        sd   CI95_low  CI95_upp
+## nimble       0.4974228 0.2897777 0.02456107 0.9753864
+## nimble_slice 0.4992225 0.2885491 0.02481045 0.9739331
+## , , psiV[1]
+##                   mean         sd  CI95_low  CI95_upp
+## nimble       0.8284553 0.01179648 0.8047171 0.8508850
+## nimble_slice 0.8284069 0.01180730 0.8046848 0.8508891
+## , , psiV[2]
+##                   mean         sd  CI95_low  CI95_upp
+## nimble       0.1524291 0.01116500 0.1311557 0.1749721
+## nimble_slice 0.1524675 0.01113948 0.1313444 0.1749813
+## , , psiV[3]
+##                    mean          sd   CI95_low   CI95_upp
+## nimble       0.01911560 0.004656270 0.01111175 0.02913514
+## nimble_slice 0.01912555 0.004690259 0.01107472 0.02935913
+## , , psiF[1]
+##                   mean         sd  CI95_low  CI95_upp
+## nimble       0.1826393 0.01834239 0.1481287 0.2200926
+## nimble_slice 0.1822947 0.01832617 0.1476564 0.2196171
+## , , psiF[2]
+##                   mean         sd  CI95_low  CI95_upp
+## nimble       0.8035445 0.01886984 0.7651551 0.8390048
+## nimble_slice 0.8039209 0.01889665 0.7654378 0.8396482
+## , , psiF[3]
+##                    mean          sd    CI95_low   CI95_upp
+## nimble       0.01381622 0.005887290 0.004628151 0.02730495
+## nimble_slice 0.01378435 0.005881107 0.004641708 0.02737254
+## , , psiD[1]
+##                   mean         sd  CI95_low  CI95_upp
+## nimble       0.5531827 0.09987618 0.3536600 0.7414316
+## nimble_slice 0.5535132 0.10052698 0.3509375 0.7420909
+## , , psiD[2]
+##                  mean         sd   CI95_low  CI95_upp
+## nimble       0.173231 0.07061848 0.06021326 0.3327789
+## nimble_slice 0.172675 0.07026927 0.05971074 0.3300977
+## , , psiD[3]
+##                   mean         sd  CI95_low  CI95_upp
+## nimble       0.2735863 0.09832936 0.1097265 0.4889930
+## nimble_slice 0.2738118 0.09882108 0.1093307 0.4917201
+## > effectiveSize:
+##                  s[1]     s[2]     s[3]     s[4]     s[5]     s[6]     s[7]
+## nimble       12886.96 21240.54 20073.06 19563.74 20392.95 19706.63 21059.14
+## nimble_slice 45727.82 92192.63 81242.44 77398.30 79402.53 78835.61 85956.70
+##                  s[8]     s[9]    s[10]    s[11]  psiV[1]   psiV[2]  psiV[3]
+## nimble       19276.62 20677.30 14582.41 22017.54 34452.02  32932.23 17259.74
+## nimble_slice 74109.01 88245.55 52774.93 94660.22 96421.22 101091.42 80307.31
+##                psiF[1]   psiF[2]  psiF[3]   psiD[1]  psiD[2]  psiD[3]
+## nimble        29028.23  30446.12 14437.97  23710.67 18461.25 18639.98
+## nimble_slice 121464.48 118522.17 72116.38 107209.09 93178.33 87896.95
+## > effectiveSize / timing:
+##                  s[1]      s[2]      s[3]      s[4]      s[5]      s[6]
+## nimble       218.0282  359.3582  339.6063  330.9893  345.0182  333.4067
+## nimble_slice 773.6465 1559.7617 1374.5009 1309.4637 1343.3723 1333.7809
+##                   s[7]      s[8]      s[9]    s[10]     s[11]   psiV[1]
+## nimble        356.2892  326.1316  349.8292 246.7126  372.5039  582.8767
+## nimble_slice 1454.2591 1253.8139 1492.9831 892.8730 1601.5097 1631.3031
+##                psiV[2]  psiV[3]   psiF[1]   psiF[2]   psiF[3]   psiD[1]
+## nimble        557.1642  292.009  491.1144  515.1029  244.2688  401.1491
+## nimble_slice 1710.3160 1358.680 2054.9977 2005.2182 1220.1015 1813.8179
+##                psiD[2]   psiD[3]
+## nimble        312.3369  315.3606
+## nimble_slice 1576.4384 1487.0852
+
+
+
+
+
+
+
+out <- run_suite(goose, monitors = c('p','phi','psi'))
 ##         nimble nimble_compile 
 ##     27.6496000      0.3303333 
 ##                p[1]       p[2]      p[3]       p[4]       p[5]       p[6]
@@ -115,3 +270,23 @@ run_suite(goose, monitors = c('p','phi','psi'))
 ##    221.67857     63.80433     61.53275 
 
 
+
+
+## (not using seasonal dipper model)
+##out <- run_suite(dipperSeasonalDHMM)
+## seasonal model using dDHMM
+## > out$timing
+##         nimble nimble_compile 
+##      6.1903167      0.2175833 
+## > out$summary[, c('mean','sd','CI95_low','CI95_upp'), ]
+##           phi_flood    phi_non          p
+## mean     0.47028532 0.60885386 0.89211450
+## sd       0.04299001 0.03098627 0.02973024
+## CI95_low 0.38647056 0.54783431 0.82784713
+## CI95_upp 0.55580204 0.66898877 0.94310972
+## > out$summary[, 'effectiveSize', ]
+## phi_flood   phi_non         p 
+##  21666.88  18643.64  17404.35 
+## > out$summary[, 'effectiveSize', ] / out$timing['nimble']
+## phi_flood   phi_non         p 
+##  3500.125  3011.742  2811.544 
