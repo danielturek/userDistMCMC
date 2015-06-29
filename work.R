@@ -14,14 +14,16 @@ load('models.RData')
 results <- resultsObjectDef(niter=niter)
 
 results$run(dipper, MCMCs = c('nimble', 'nimble_slice', 'jags'))
-results$run(dipperDHMM, MCMCs = 'nimble', name='dipper', MCMCnames='nimbleDHMM')
-##results$run(dipperSeasonalDHMM, MCMCs = 'nimble')   ## stopped using
+results$run(dipperDHMM, MCMCs = c('nimble','nimble_slice'), MCMCnames=c('nimbleDHMM','nimble_sliceDHMM'), name='dipper')
 results$run(orchidDHMM, monitors=c('s','psiV','psiF','psiD'), MCMCs=c('nimble','nimble_slice'), name='orchid', MCMCnames=c('nimbleDHMM','nimble_sliceDHMM'))
 results$run(orchidJAGSfunction, MCMCnames='jags', name='orchid')
 results$run(gooseDHMM, monitors = c('p','phi','psi'), MCMCs = 'nimble', name='goose')
+##results$run(dipperSeasonalDHMM, MCMCs = 'nimble')   ## stopped using
 
 out <- results$out
+out
 
+save(out, file = '~/GitHub/userDistMCMC/results.RData')
 
 #############
 ############# BEFORE DELETEING EVERYTHING BELOW HERE,
@@ -29,13 +31,10 @@ out <- results$out
 ############# AND NITER = 100,000, AND CHECK TO MAKE
 ############# SURE THEY'RE ALL ROUGHLY THE SAME RESULTS
 #############
-############# ALSO MIGHT CONSIDER WRITING THE DIPPER **SEASONAL**
-############# MODEL IN THE LATENT STATE FORM, AND RUNNING
-############# JAGS, NIMBLE, AND NIMBLE_SLICE ON IT.
-#############
 
 
-out <- run_suite(dipper, MCMCs = c('nimble', 'nimble_slice', 'jags'), niter=niter)
+
+########out <- run_suite(dipper, MCMCs = c('nimble', 'nimble_slice', 'jags'), niter=niter)
 ## jags slice samples phi & p, and x's using finite discrete CDF inversion
 ## > timing:
 ##         nimble   nimble_slice           jags nimble_compile 
@@ -63,7 +62,7 @@ out <- run_suite(dipper, MCMCs = c('nimble', 'nimble_slice', 'jags'), niter=nite
 ## jags         15085.892 6818.765
 
 
-out <- run_suite(dipperDHMM, MCMCs = 'nimble')
+########out <- run_suite(dipperDHMM, MCMCs = 'nimble')
 ## using dDHMM
 ## > out$timing
 ##         nimble nimble_compile 
@@ -83,7 +82,7 @@ out <- run_suite(dipperDHMM, MCMCs = 'nimble')
 
 
 
-run_orchid_JAGS(trunc = trunc)
+########run_orchid_JAGS(trunc = trunc)
 ## > timing:
 ## [1] 47.03898
 ## > summary statistics:
@@ -126,7 +125,7 @@ run_orchid_JAGS(trunc = trunc)
 
 ## orchidDHMM (multistate, from Kery & Schaub, y[i] ~ dDHMM(...) for nimble only)
 ## (9.7. Real data example: the showy lady's slipper)
-out <- run_suite(orchidDHMM, monitors=c('s','psiV','psiF','psiD'), MCMCs=c('nimble','nimble_slice'))
+########out <- run_suite(orchidDHMM, monitors=c('s','psiV','psiF','psiD'), MCMCs=c('nimble','nimble_slice'))
 ## > timing:
 ##         nimble   nimble_slice nimble_compile 
 ##     59.1068667    302.7952167      0.3781333 
@@ -241,7 +240,7 @@ out <- run_suite(orchidDHMM, monitors=c('s','psiV','psiF','psiD'), MCMCs=c('nimb
 
 
 
-out <- run_suite(goose, monitors = c('p','phi','psi'), MCMCs = 'nimble')
+########out <- run_suite(goose, monitors = c('p','phi','psi'), MCMCs = 'nimble')
 ##         nimble nimble_compile 
 ##     27.6496000      0.3303333 
 ##                p[1]       p[2]      p[3]       p[4]       p[5]       p[6]
