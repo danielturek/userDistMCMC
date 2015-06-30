@@ -104,11 +104,10 @@ resultsObjectClassDef <- R6Class(
         initialize = function(niter) {
             self$niter <- niter
         },
-        run = function(lst, MCMCs, name, monitors=character(), MCMCnames) {
-            if(missing(name)) name <- as.character(substitute(lst))
-            if(is.list(lst)) {
+        run = function(name, mod, MCMCs, monitors=character(), MCMCnames) {
+            if(is.list(mod)) {
                 suiteOut <- MCMCsuite(
-                    lst$code, lst$constants, lst$data, lst$inits,
+                    mod$code, mod$constants, mod$data, mod$inits,
                     MCMCs = MCMCs,
                     niter = self$niter,
                     monitors = monitors,
@@ -135,8 +134,8 @@ resultsObjectClassDef <- R6Class(
                 self$out[[name]]$ESS <- newAr
                 self$out[[name]]$Efficiency <- newArE
                 return(invisible(NULL))
-            } else if(is.function(lst)) {
-                ret <- lst(niter=self$niter)
+            } else if(is.function(mod)) {
+                ret <- mod(niter=self$niter)
                 MCMCnamesToUse <- if(!missing(MCMCnames)) MCMCnames else stop('must provide MCMCnames')
                 self$out[[name]]$timing <- c(self$out[[name]]$timing, ret$theTime)
                 names(self$out[[name]]$timing)[length(self$out[[name]]$timing)] <- MCMCnamesToUse
@@ -171,5 +170,59 @@ resultsObjectClassDef <- R6Class(
 )
 
 
+
+
+## Multiple plot function
+##
+## ggplot objects can be passed in ..., or to plotlist (as a list of ggplot objects)
+## - cols:   Number of columns in layout
+## - layout: A matrix specifying the layout. If present, 'cols' is ignored.
+##
+## If the layout is something like matrix(c(1,2,3,3), nrow=2, byrow=TRUE),
+## then plot 1 will go in the upper left, 2 will go in the upper right, and
+## 3 will go all the way across the bottom.
+multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
+    library(grid)
+    ## Make a list from the ... arguments and plotlist
+    plots <- c(list(...), plotlist)
+    numPlots = length(plots)
+    ## If layout is NULL, then use 'cols' to determine layout
+    if (is.null(layout)) {
+        ## Make the panel
+        ## ncol: Number of columns of plots
+        ## nrow: Number of rows needed, calculated from # of cols
+        layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
+                         ncol = cols, nrow = ceiling(numPlots/cols))
+    }
+    if (numPlots==1) {
+        print(plots[[1]])
+    } else {
+        ## Set up the page
+        grid.newpage()
+        pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
+        ## Make each plot, in the correct location
+        for (i in 1:numPlots) {
+            ## Get the i,j matrix positions of the regions that contain this subplot
+            matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
+            print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
+                                  layout.pos.col = matchidx$col))
+        }
+    }
+}
+
+
+## results_plots <- function(out) {
+    
+## }
+
+
+## name <- 'dipper'
+## E <- out[[ex]]$Efficiency
+## df <- data.frame(mcmc=rep(dimnames(E)[[1]],each=dim(E)[2]), param=rep(dimnames(E)[[2]],dim(E)[1]), E=as.numeric(t(E)))
+## dev.new()
+## p1 <- ggplot(df, aes(mcmc, E, fill=mcmc)) + stat_summary(fun.y='mean', geom='bar')
+## p2 <- ggplot(df, aes(mcmc, E, fill=mcmc)) + stat_summary(fun.y='min', geom='bar')
+## p3 <- ggplot(df, aes(mcmc, E, fill=mcmc)) + geom_point()
+## multiplot(p1, p2, p3, cols=3)
 
 

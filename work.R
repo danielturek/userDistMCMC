@@ -1,29 +1,14 @@
 
-trunc <- TRUE
-niter <- 5000
-library(igraph)
-library(nimble)
-library(coda)
-library(R6)
-library(abind)
+
+library(ggplot2)
 setwd('~/GitHub/userDistMCMC')
 source('defs.R')
-source('create_data.R')
-load('models.RData')
+load('~/GitHub/userDistMCMC/results.RData')
+results_plots(out)
 
-results <- resultsObjectDef(niter=niter)
 
-results$run(dipper, MCMCs = c('nimble', 'nimble_slice', 'jags'))
-results$run(dipperDHMM, MCMCs = c('nimble','nimble_slice'), MCMCnames=c('nimbleDHMM','nimble_sliceDHMM'), name='dipper')
-results$run(orchidDHMM, monitors=c('s','psiV','psiF','psiD'), MCMCs=c('nimble','nimble_slice'), name='orchid', MCMCnames=c('nimbleDHMM','nimble_sliceDHMM'))
-results$run(orchidJAGSfunction, MCMCnames='jags', name='orchid')
-results$run(gooseDHMM, monitors = c('p','phi','psi'), MCMCs = 'nimble', name='goose')
-##results$run(dipperSeasonalDHMM, MCMCs = 'nimble')   ## stopped using
 
-out <- results$out
-out
 
-save(out, file = '~/GitHub/userDistMCMC/results.RData')
 
 #############
 ############# BEFORE DELETEING EVERYTHING BELOW HERE,
