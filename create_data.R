@@ -5,8 +5,9 @@
 
 load('~/GitHub/legacy/dipper/dipperData.RData')
 ## optionally truncate data:
+last <- apply(y, 1, function(hist) max(which(hist==1)))
 yDHMM <- 2 - y
-if(trunc) { ind <- c(1:3);   nind<-length(ind);   first<-first[ind];   y<-y[ind,,drop=FALSE];   yDHMM<-yDHMM[ind,,drop=FALSE];   x_init<-x_init[ind,,drop=FALSE] }
+if(trunc) { ind <- c(1:3);   nind<-length(ind);   first<-first[ind];   last<-last[ind];   y<-y[ind,,drop=FALSE];   yDHMM<-yDHMM[ind,,drop=FALSE];   x_init<-x_init[ind,,drop=FALSE] }
 
 ## dipper (with latent states, suitable for jags)
 code <- quote({
@@ -42,13 +43,14 @@ code <- quote({
     Z[1,2,1] <- 0
     Z[2,2,1] <- 1
     Z[1:2,1:2,2] <- nimArray(0, 2, 2)
-    for (i in 1:nind)
+    for (i in 1:nind) {
         y[i, first[i]:k] ~ dDHMM(length=k-first[i]+1,
                                  prior=prior[1:2],
                                  condition=condition[1:2],
                                  Z=Z[1:2,1:2,1:2], useZt=0,
                                  T=T[1:2,1:2,1:2], useTt=0,
                                  mult=1)
+    }
 })
 constants <- list(k=k, nind=nind, first=first, prior=c(1,0), condition=c(1,0))
 data      <- list(y=yDHMM)
@@ -56,6 +58,18 @@ inits     <- list(phi=0.6, p=0.9)
 dipperDHMM <- list(code=code, constants=constants, data=data, inits=inits)
 
 
+## dipperCJS (y[i] ~ dCJS(...) for nimble only)
+code <- quote({
+    phi ~ dunif(0, 1)
+    p ~ dunif(0, 1)
+    for (i in 1:nind) {
+        y[i, first[i]:k] ~ dCJS(length=k-first[i]+1, last=last[i], phi=phi, p=p)
+    }
+})
+constants <- list(k=k, nind=nind, first=first, last=last)
+data      <- list(y=y)
+inits     <- list(phi=0.6, p=0.9)
+dipperCJS <- list(code=code, constants=constants, data=data, inits=inits)
 
 
 
@@ -757,6 +771,7 @@ orchidDHMM <- list(code=code, constants=constants, data=data, inits=inits)
 
 save(dipper,
      dipperDHMM,
+     dipperCJS,
      ##dipperSeasonalDHMM,
      gooseDHMM,
      orchidJAGSfunction,

@@ -1,5 +1,14 @@
 
 
+library(igraph)
+library(nimble)
+library(coda)
+library(R6)
+library(abind)
+library(ggplot2)
+
+
+
 dDHMM <- nimbleFunction(
     run = function(x = double(1),
         length = double(), prior = double(1), condition = double(1),
@@ -41,7 +50,6 @@ dDHMM <- nimbleFunction(
     }
 )
 
-
 rDHMM <- nimbleFunction(
     run = function(n = integer(),
         length = double(), prior = double(1), condition = double(1),
@@ -56,6 +64,34 @@ rDHMM <- nimbleFunction(
 )
 
 
+
+
+dCJS <- nimbleFunction(
+    run = function(x = double(1),
+        length = double(), last = double(), phi = double(), p = double(),
+        log.p = double()) {
+        L <- 1
+        if(length > last)
+            for(i in 1:(length-last))
+                L <- 1-phi + phi*(1-p)*L
+        logL <- log(L) + (last-1)*(log(phi*p))
+        returnType(double())
+        if(log.p) return(logL) else return(exp(logL))
+    }
+)
+
+rCJS <- nimbleFunction(
+    run = function(n = integer(),
+        length = double(), last = double(), phi = double(), p = double()) {
+        if(n != 1) print('should only specify n=1 in rCJS() distribution')
+        print('STILL NEED TO WRITE THE rCJS() METHOD!')
+        returnType(double(1))
+        return(nimVector(1, length))
+    }
+)
+
+
+
 registerDistributions(list(
     dDHMM = list(
         BUGSdist = 'dDHMM(length, prior, condition, Z, useZt, T, useTt, mult)',
@@ -65,30 +101,17 @@ registerDistributions(list(
             'T = double(3)', 'useTt = double()',
             'mult = double()'),
         discrete = TRUE
+    ),
+    dCJS = list(
+        BUGSdist = 'dCJS(length, last, phi, p)',
+        types = c('value = double(1)',
+            'length = double()', 'last = double()', 'phi = double()', 'p = double()'),
+        discrete = TRUE
     )
 ))
 
 
 
-## MCMC Suite
-run_suite <- function(lst, monitors=character(), niter=100000, MCMCs='nimble') {
-    out <- MCMCsuite(
-        lst$code, lst$constants, lst$data, lst$inits,
-        MCMCs = MCMCs,
-        niter = niter,
-        monitors = monitors,
-        summaryStats = c('mean', 'median', 'sd', 'CI95_low', 'CI95_upp', 'effectiveSize'),
-        makePlot = FALSE)
-    message('> timing:')
-    print(out$timing)
-    message('> summary statistics:')
-    print(out$summary[, c('mean','sd','CI95_low','CI95_upp'), ])
-    message('> effectiveSize:')
-    print(out$summary[, 'effectiveSize', ])
-    message('> effectiveSize / timing:')
-    print(out$summary[, 'effectiveSize', ] / out$timing['nimble'])
-    return(invisible(out))
-}
 
 
 
@@ -211,18 +234,44 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
 }
 
 
-## results_plots <- function(out) {
-    
+results_plots <- function(out) {
+    for(name in names(out)) {
+        E <- out[[name]]$Efficiency
+        df <- data.frame(mcmc=rep(dimnames(E)[[1]],each=dim(E)[2]), param=rep(dimnames(E)[[2]],dim(E)[1]), E=as.numeric(t(E)))
+        dev.new(width=10, height=5)
+        ymax <- max(df$E)
+        p1 <- ggplot(df, aes(mcmc, E, fill=mcmc)) + stat_summary(fun.y='mean', geom='bar') + ggtitle(paste0(name, '\nMean')) + ylim(c(0,ymax)) + theme(legend.position='none')
+        p2 <- ggplot(df, aes(mcmc, E, fill=mcmc)) + stat_summary(fun.y='min', geom='bar') + ggtitle(paste0(name, '\nMin')) + ylim(c(0,ymax)) + theme(legend.position='none')
+        p3 <- ggplot(df, aes(mcmc, E, colour=mcmc)) + geom_point(size=3) + ylim(c(0,ymax)) + ggtitle(paste0(name, '\npoints')) + theme(legend.position='none')
+        p4 <- ggplot(df, aes(mcmc, E, fill=mcmc)) + stat_summary(fun.y='mean', geom='bar') + ylim(c(0,ymax))
+        multiplot(p1, p2, p3, p4, cols=4)
+        dev.copy2pdf(file=paste0('~/GitHub/userDistMCMC/plot_', name, '.pdf'))
+    }
+}
+
+
+
+
+
+
+
+
+
+## run_suite <- function(lst, monitors=character(), niter=100000, MCMCs='nimble') {
+##     out <- MCMCsuite(
+##         lst$code, lst$constants, lst$data, lst$inits,
+##         MCMCs = MCMCs,
+##         niter = niter,
+##         monitors = monitors,
+##         summaryStats = c('mean', 'median', 'sd', 'CI95_low', 'CI95_upp', 'effectiveSize'),
+##         makePlot = FALSE)
+##     message('> timing:')
+##     print(out$timing)
+##     message('> summary statistics:')
+##     print(out$summary[, c('mean','sd','CI95_low','CI95_upp'), ])
+##     message('> effectiveSize:')
+##     print(out$summary[, 'effectiveSize', ])
+##     message('> effectiveSize / timing:')
+##     print(out$summary[, 'effectiveSize', ] / out$timing['nimble'])
+##     return(invisible(out))
 ## }
-
-
-## name <- 'dipper'
-## E <- out[[ex]]$Efficiency
-## df <- data.frame(mcmc=rep(dimnames(E)[[1]],each=dim(E)[2]), param=rep(dimnames(E)[[2]],dim(E)[1]), E=as.numeric(t(E)))
-## dev.new()
-## p1 <- ggplot(df, aes(mcmc, E, fill=mcmc)) + stat_summary(fun.y='mean', geom='bar')
-## p2 <- ggplot(df, aes(mcmc, E, fill=mcmc)) + stat_summary(fun.y='min', geom='bar')
-## p3 <- ggplot(df, aes(mcmc, E, fill=mcmc)) + geom_point()
-## multiplot(p1, p2, p3, cols=3)
-
-
