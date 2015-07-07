@@ -44,12 +44,12 @@ code <- quote({
     Z[2,2,1] <- 1
     Z[1:2,1:2,2] <- nimArray(0, 2, 2)
     for (i in 1:nind) {
-        y[i, first[i]:k] ~ dDHMM(length=k-first[i]+1,
-                                 prior=prior[1:2],
-                                 condition=condition[1:2],
-                                 Z=Z[1:2,1:2,1:2], useZt=0,
-                                 T=T[1:2,1:2,1:2], useTt=0,
-                                 mult=1)
+        y[i, first[i]:k] ~ dDHMM(length = k-first[i]+1,
+                                 prior = prior[1:2],
+                                 condition = condition[1:2],
+                                 Z = Z[1:2,1:2,1:2], useZt = 0,
+                                 T = T[1:2,1:2,1:2], useTt = 0,
+                                 mult = 1)
     }
 })
 constants <- list(k=k, nind=nind, first=first, prior=c(1,0), condition=c(1,0))
@@ -399,15 +399,29 @@ mult <- c(
     13)
 ## optional truncate:
 if(trunc) { ind <- 1:5;     y<-y[ind,];     mult<-mult[ind] }
-first <- apply(y, 1, function(hist) which(hist!=0)[1])
+y[which(y == 0)] <- 4
+first <- apply(y, 1, function(hist) which(hist!=4)[1])
 nind <- dim(y)[1]
 k <- dim(y)[2]
 ##x_init <- array(as.numeric(NA), dim(y))
 ##for(i in 1:dim(x_init)[1]) {
 ##    x_init[i, first[i]:k] <- y[i, first[i]]
 ##}
-y[which(y == 0)] <- 4
 
+yExp <- array(0, c(sum(mult), k))
+cur <- 0
+for(i in seq_along(mult)) {
+    for(j in 1:mult[i])
+        yExp[cur+j,] <- y[i,]
+    cur <- cur + mult[i]
+}
+firstExp <- apply(yExp, 1, function(hist) which(hist!=4)[1])
+nindExp <- dim(yExp)[1]
+kExp <- dim(yExp)[2]
+x_initExp <- array(as.numeric(NA), dim(yExp))
+for(i in 1:dim(x_initExp)[1]) {
+    x_initExp[i, (firstExp[i]+1):kExp] <- yExp[i, (firstExp[i]+1):kExp]
+}
 
 
 ## gooesDHMM (multistate, y[i] ~ dDHMM(...) for nimble only, plus is has large multiplicities)
@@ -481,12 +495,12 @@ code <- quote({
         T[4,4,t] <- 1
     }
     for (i in 1:nind)
-        y[i, first[i]:k] ~ dDHMM(length=k-first[i]+1,
-                                 prior=prior[1:4],
-                                 condition=condition[1:4],
-                                 Z=Z[1:k,1:k,first[i]:k], useZt=1,
-                                 T=T[1:k,1:k,first[i]:k], useTt=1,
-                                 mult=mult[i])
+        y[i, first[i]:k] ~ dDHMM(length = k-first[i]+1,
+                                 prior = prior[1:4],
+                                 condition = condition[1:4],
+                                 Z = Z[1:k,1:k,first[i]:k], useZt = 1,
+                                 T = T[1:k,1:k,first[i]:k], useTt = 1,
+                                 mult = mult[i])
 })
 constants <- list(nind=nind, k=k, first=first, mult=mult,
                   prior=c(1/3, 1/3, 1/3, 0),
@@ -494,6 +508,129 @@ constants <- list(nind=nind, k=k, first=first, mult=mult,
 data <- list(y=y)
 inits <- list(p=rep(1/2,6), phi=rep(1/2,3), alpha=array(0,c(2,3,2)))
 gooseDHMM <- list(code=code, constants=constants, data=data, inits=inits)
+
+
+
+
+
+
+## gooesExp (multistate, x[i] latent states, large multiplicities expanded for jags run)
+gooseExpJAGSfunction <- function(niter = 100000) {
+    sink('goose.jags')
+    cat('
+model {
+    for(i in 1:6) {
+        p[i] ~ dunif(0, 1)
+    }
+    for(t in 1:3) {
+        Z[1,1,t] <- p[1]
+        Z[2,1,t] <- 0
+        Z[3,1,t] <- 0
+        Z[4,1,t] <- 1 - p[1]
+        Z[1,2,t] <- 0
+        Z[2,2,t] <- p[2]
+        Z[3,2,t] <- 0
+        Z[4,2,t] <- 1 - p[2]
+        Z[1,3,t] <- 0
+        Z[2,3,t] <- 0
+        Z[3,3,t] <- p[3]
+        Z[4,3,t] <- 1 - p[3]
+        Z[1,4,t] <- 0
+        Z[2,4,t] <- 0
+        Z[3,4,t] <- 0
+        Z[4,4,t] <- 1
+    }
+    Z[1,1,4] <- p[4]
+    Z[2,1,4] <- 0
+    Z[3,1,4] <- 0
+    Z[4,1,4] <- 1 - p[4]
+    Z[1,2,4] <- 0
+    Z[2,2,4] <- p[5]
+    Z[3,2,4] <- 0
+    Z[4,2,4] <- 1 - p[5]
+    Z[1,3,4] <- 0
+    Z[2,3,4] <- 0
+    Z[3,3,4] <- p[6]
+    Z[4,3,4] <- 1 - p[6]
+    Z[1,4,4] <- 0
+    Z[2,4,4] <- 0
+    Z[3,4,4] <- 0
+    Z[4,4,4] <- 1
+    for(i in 1:3) {
+        phi[i] ~ dunif(0, 1)
+    }
+    for(i in 1:2) {
+        for(j in 1:3) {
+            for(l in 1:2) {
+                alpha[i,j,l] ~ dnorm(0, 0.0001)
+                exal[i,j,l] <- exp(alpha[i,j,l])
+            }
+        }
+    }
+    for(j in 1:3) {
+        for(l in 1:2) {
+            psi[1,j,l] <- exal[1,j,l] / (1 + exal[1,j,l] + exal[2,j,l])
+            psi[2,j,l] <- exal[2,j,l] / (1 + exal[1,j,l] + exal[2,j,l])
+            psi[3,j,l] <-           1 / (1 + exal[1,j,l] + exal[2,j,l])
+        }
+    }
+    for(t in 1:2) {
+        for(j in 1:3) {
+            for(i in 1:3) {
+                T[i,j,t] <- phi[j] * psi[i,j,1]
+            }
+            T[4,j,t] <- 1 - phi[j]
+        }
+    }
+    for(t in 3:4) {
+        for(j in 1:3) {
+            for(i in 1:3) {
+                T[i,j,t] <- phi[j] * psi[i,j,2]
+            }
+            T[4,j,t] <- 1 - phi[j]
+        }
+    }
+    for(t in 1:4) {
+        T[1,4,t] <- 0
+        T[2,4,t] <- 0
+        T[3,4,t] <- 0
+        T[4,4,t] <- 1
+    }
+    for(i in 1:nind) {
+        x[i,first[i]] <- y[i,first[i]]
+        for(t in (first[i]+1):k) {
+            x[i,t] ~ dcat(T[1:4, x[i,t-1], t-1])
+            y[i,t] ~ dcat(Z[1:4, x[i,t], t])
+        }
+    }
+}
+',fill=TRUE) 
+    sink() 
+    jags_data <- list(y=yExp, first=firstExp, k=kExp, nind=nindExp)
+    initFunction <- function() list(p=rep(1/2,6), phi=rep(1/2,3), alpha=array(0,c(2,3,2)), x=x_initExp)
+    parameters <- c('p','phi','psi')
+    library(R2WinBUGS) 
+    library(R2jags) 
+    t <- system.time({ls <- jags(jags_data, initFunction, parameters, "goose.jags", n.chains = 1, n.thin = 1, n.iter = niter, n.burnin = 2000, working.directory = getwd())})
+    ar <- ls$BUGSoutput$sims.array    ## using sims.array is consistent with MCMCsuite
+    ar <- ar[,1,]     ## drop middle index
+    ar <- ar[, -1]    ## drop deviance
+    summaryStats <- c('mean', 'median', 'sd', 'CI95_low', 'CI95_upp', 'effectiveSize')
+    library(coda)
+    CI95_low <- function(x) quantile(x, probs = 0.025)
+    CI95_upp <- function(x) quantile(x, probs = 0.975)
+    nSummaryStats <- length(summaryStats)
+    nMonitorNodes <- dim(ar)[2]
+    summaryArray <- array(NA, c(nSummaryStats, nMonitorNodes))
+    dimnames(summaryArray) <- list(summaryStats, dimnames(ar)[[2]])
+    summaryStatFunctions <- lapply(summaryStats, function(txt) eval(parse(text=txt)[[1]]))
+    for(iStat in seq_along(summaryStats)) {
+        summaryArray[iStat, ] <- apply(ar, 2, summaryStatFunctions[[iStat]])
+    }
+    theTime <- as.numeric(t[3] / 60)    ## this is consistent with MCMCsuite
+    list(theTime=theTime, summary=summaryArray)
+}
+
 
 
 
@@ -732,14 +869,13 @@ code <- quote({
     T[2,4,k] <- 0
     T[3,4,k] <- 0
     T[4,4,k] <- 1
-    ## Likelihood 
     for (i in 1:nind) {
-        y[i, f[i]:k] ~ dDHMM(length=k-f[i]+1,
-                             prior=prior[1:4],
-                             condition=condition[1:3],
-                             Z=Z[1:3,1:4,1:2],    useZt=0,
-                             T=T[1:4,1:4,f[i]:k], useTt=1,
-                             mult=mult[i])
+        y[i, f[i]:k] ~ dDHMM(length = k-f[i]+1,
+                             prior = prior[1:4],
+                             condition = condition[1:3],
+                             Z = Z[1:3,1:4,1:2],    useZt = 0,
+                             T = T[1:4,1:4,f[i]:k], useTt = 1,
+                             mult = mult[i])
     }
 })
 
@@ -774,6 +910,7 @@ save(dipper,
      dipperCJS,
      ##dipperSeasonalDHMM,
      gooseDHMM,
+     gooseExpJAGSfunction,
      orchidJAGSfunction,
      orchidDHMM,
      file = '~/GitHub/userDistMCMC/models.RData')
@@ -812,12 +949,12 @@ save(dipper,
 ##     Z[2,2,1] <- 1
 ##     Z[1:2,1:2,2] <- nimArray(0, 2, 2)
 ##     for (i in 1:nind)
-##         y[i, first[i]:k] ~ dDHMM(length=k-first[i]+1,
-##                                  prior=prior[1:2],
-##                                  condition=condition[1:2],
-##                                  Z=Z[1:2,1:2,1:2],        useZt=0,
-##                                  T=T[1:2,1:2,first[i]:k], useTt=1,
-##                                  mult=1)
+##         y[i, first[i]:k] ~ dDHMM(length = k-first[i]+1,
+##                                  prior = prior[1:2],
+##                                  condition = condition[1:2],
+##                                  Z = Z[1:2,1:2,1:2],        useZt = 0,
+##                                  T = T[1:2,1:2,first[i]:k], useTt = 1,
+##                                  mult = 1)
 ## })
 ## constants <- list(k=k, nind=nind, first=first, prior=c(1,0), condition=c(1,0))
 ## data      <- list(y=yDHMM)

@@ -74,7 +74,9 @@ dCJS <- nimbleFunction(
         if(length > last)
             for(i in 1:(length-last))
                 L <- 1-phi + phi*(1-p)*L
-        logL <- log(L) + (last-1)*(log(phi*p))
+        ##logL <- log(L) + (last-1)*(log(phi*p))
+        nSightings <- sum(x[1:last])
+        logL <- log(L) + (last-1)*log(phi) + (nSightings-1)*log(p) + (last-nSightings)*log(1-p)
         returnType(double())
         if(log.p) return(logL) else return(exp(logL))
     }
@@ -159,6 +161,10 @@ resultsObjectClassDef <- R6Class(
                 return(invisible(NULL))
             } else if(is.function(mod)) {
                 ret <- mod(niter=self$niter)
+                ## fix jag's param names: x[1,2,3] -> x[1, 2, 3]
+                jagsNames <- dimnames(ret$summary)[[2]]
+                jagsNamesFixed <- gsub(',', ', ', jagsNames)
+                dimnames(ret$summary)[[2]] <- jagsNamesFixed
                 MCMCnamesToUse <- if(!missing(MCMCnames)) MCMCnames else stop('must provide MCMCnames')
                 self$out[[name]]$timing <- c(self$out[[name]]$timing, ret$theTime)
                 names(self$out[[name]]$timing)[length(self$out[[name]]$timing)] <- MCMCnamesToUse
