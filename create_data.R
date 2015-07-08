@@ -7,7 +7,7 @@ load('~/GitHub/legacy/dipper/dipperData.RData')
 ## optionally truncate data:
 last <- apply(y, 1, function(hist) max(which(hist==1)))
 yDHMM <- 2 - y
-if(trunc) { ind <- c(1:3);   nind<-length(ind);   first<-first[ind];   last<-last[ind];   y<-y[ind,,drop=FALSE];   yDHMM<-yDHMM[ind,,drop=FALSE];   x_init<-x_init[ind,,drop=FALSE] }
+if(trunc) { ind <- 1:3;   nind<-length(ind);   first<-first[ind];   last<-last[ind];   y<-y[ind,,drop=FALSE];   yDHMM<-yDHMM[ind,,drop=FALSE];   x_init<-x_init[ind,,drop=FALSE] }
 
 ## dipper (with latent states, suitable for jags)
 code <- quote({
@@ -63,7 +63,7 @@ code <- quote({
     phi ~ dunif(0, 1)
     p ~ dunif(0, 1)
     for (i in 1:nind) {
-        y[i, first[i]:k] ~ dCJS(length=k-first[i]+1, last=last[i], phi=phi, p=p)
+        y[i, first[i]:k] ~ dCJS(length=k-first[i]+1, last=last[i]-first[i]+1, phi=phi, p=p)
     }
 })
 constants <- list(k=k, nind=nind, first=first, last=last)
@@ -398,7 +398,7 @@ mult <- c(
     3,
     13)
 ## optional truncate:
-if(trunc) { ind <- 1:5;     y<-y[ind,];     mult<-mult[ind] }
+if(trunc) { ind <- 1:3;     y<-y[ind,];     mult<-mult[ind] }
 y[which(y == 0)] <- 4
 first <- apply(y, 1, function(hist) which(hist!=4)[1])
 nind <- dim(y)[1]
@@ -407,7 +407,6 @@ k <- dim(y)[2]
 ##for(i in 1:dim(x_init)[1]) {
 ##    x_init[i, first[i]:k] <- y[i, first[i]]
 ##}
-
 yExp <- array(0, c(sum(mult), k))
 cur <- 0
 for(i in seq_along(mult)) {
@@ -418,10 +417,31 @@ for(i in seq_along(mult)) {
 firstExp <- apply(yExp, 1, function(hist) which(hist!=4)[1])
 nindExp <- dim(yExp)[1]
 kExp <- dim(yExp)[2]
-x_initExp <- array(as.numeric(NA), dim(yExp))
-for(i in 1:dim(x_initExp)[1]) {
-    x_initExp[i, (firstExp[i]+1):kExp] <- yExp[i, (firstExp[i]+1):kExp]
+x_knownExp <- yExp
+x_knownExp[x_knownExp==4] <- NA
+for(i in 1:dim(x_knownExp)[1]) {
+    x_knownExp[i, firstExp[i]] <- NA
 }
+### below are the correct initial values for x for jags
+### this took a long time
+### they must result in a valid model logProb
+x_initExp <- yExp
+for(i in 1:dim(x_initExp)[1]) {
+    x_initExp[i, 1:firstExp[i]] <- NA
+    lastState <- yExp[i,firstExp[i]]
+    for(j in (firstExp[i]+1):k) {
+        if(x_initExp[i,j] == 4) {
+            x_initExp[i,j] <- lastState
+        } else {
+            lastState <- x_initExp[i,j]
+            x_initExp[i,j] <- NA
+        }
+    }
+}
+
+
+
+
 
 
 ## gooesDHMM (multistate, y[i] ~ dDHMM(...) for nimble only, plus is has large multiplicities)
@@ -606,7 +626,7 @@ model {
 }
 ',fill=TRUE) 
     sink() 
-    jags_data <- list(y=yExp, first=firstExp, k=kExp, nind=nindExp)
+    jags_data <- list(y=yExp, first=firstExp, k=kExp, nind=nindExp, x=x_knownExp)
     initFunction <- function() list(p=rep(1/2,6), phi=rep(1/2,3), alpha=array(0,c(2,3,2)), x=x_initExp)
     parameters <- c('p','phi','psi')
     library(R2WinBUGS) 
@@ -756,7 +776,7 @@ model {
     ## Note that all initial values of the unknown z must all be 3 (not 1 or 2). Therefore the function ms_init_z need some slight changes. 
     ms_init_z <- function(ch, f){
         for (i in 1:dim(ch)[1]){ch[i,1:f[i]] <- NA}
-        states <- max(ch, na.rm = TRUE) 
+        states <- 3
         v <- which(ch==states) 
         ch[-v] <- NA 
         ch[v] <- states 
@@ -786,14 +806,6 @@ model {
         summaryArray[iStat, ] <- apply(ar, 2, summaryStatFunctions[[iStat]])
     }
     theTime <- as.numeric(t[3] / 60)    ## this is consistent with MCMCsuite
-    ## message('> timing:')
-    ## print(theTime)
-    ## message('> summary statistics:')
-    ## print(summaryArray[c('mean','sd','CI95_low','CI95_upp'), ])
-    ## message('> effectiveSize:')
-    ## print(summaryArray['effectiveSize', ])
-    ## message('> effectiveSize / timing:')
-    ## print(summaryArray['effectiveSize', ] / theTime)
     list(theTime=theTime, summary=summaryArray)
 }
 

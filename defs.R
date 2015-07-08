@@ -9,6 +9,8 @@ library(ggplot2)
 
 
 
+
+
 dDHMM <- nimbleFunction(
     run = function(x = double(1),
         length = double(), prior = double(1), condition = double(1),
@@ -16,15 +18,18 @@ dDHMM <- nimbleFunction(
         T = double(3), useTt = double(),
         mult = double(),
         log.p = double()) {
-        verb <- 0
-        pi <- prior / sum(prior)    ## normalize prior, assume no negative values
-        if(verb) { print('initial pi:'); print(pi) }
+        pi <- prior
+        ## verb <- 0
+        ## if(verb) { print('initial pi:'); print(pi) }
         logL <- 0
+        Zind <- 1
+        Tind <- 1
         for(t in 1:length) {
-            if(verb) { print('**************************************')
-                       print('t: ', t)
-                       print('pi entering into this iteration:'); print(pi) }
-            if(useZt) Zcurrent <- Z[,,t] else Zcurrent <- Z[,,1]
+            ## if(verb) { print('**************************************')
+            ##            print('t: ', t)
+            ##            print('pi entering into this iteration:'); print(pi) }
+            if(useZt) Zind <- t
+            Zcurrent <- Z[,,Zind]
             if(t == 1) {    ## condition on first observation
                 for(i in 1:dim(Zcurrent)[1])
                     Zcurrent[i, ] <- Zcurrent[i, ] * condition[i]
@@ -36,19 +41,21 @@ dDHMM <- nimbleFunction(
             Zpi <- Zcurrent[x[t], ] * pi
             sumZpi <- sum(Zpi)
             logL <- logL + log(sumZpi) * mult
-            if(useTt) Tcurrent <- T[,,t] else Tcurrent <- T[,,1]
-            pi <- (Tcurrent %*% asCol(Zpi) / sumZpi)[, 1]
-            if(verb) { print('Zcurrent:'); print(Zcurrent)
-                       print('Zpi:'); print(Zpi)
-                       print('likelihood contribution: ', sumZpi)
-                       print('contribution exponent: ', mult)
-                       print('updated pi exiting this iteration:'); print(pi)
-                       print('**************************************') }
+            if(t != length) { if(useTt) Tind <- t
+                              pi <- (T[,,Tind] %*% asCol(Zpi) / sumZpi)[ ,1] }
+            ## if(verb) { print('Zcurrent:'); print(Zcurrent)
+            ##            print('Zpi:'); print(Zpi)
+            ##            print('likelihood contribution: ', sumZpi)
+            ##            print('contribution exponent: ', mult)
+            ##            print('updated pi exiting this iteration:'); print(pi)
+            ##            print('**************************************') }
         }
         returnType(double())
         if(log.p) return(logL) else return(exp(logL))
     }
 )
+
+
 
 rDHMM <- nimbleFunction(
     run = function(n = integer(),
@@ -74,7 +81,6 @@ dCJS <- nimbleFunction(
         if(length > last)
             for(i in 1:(length-last))
                 L <- 1-phi + phi*(1-p)*L
-        ##logL <- log(L) + (last-1)*(log(phi*p))
         nSightings <- sum(x[1:last])
         logL <- log(L) + (last-1)*log(phi) + (nSightings-1)*log(p) + (last-nSightings)*log(1-p)
         returnType(double())
