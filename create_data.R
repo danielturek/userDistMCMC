@@ -628,7 +628,8 @@ model {
     sink() 
     jags_data <- list(y=yExp, first=firstExp, k=kExp, nind=nindExp, x=x_knownExp)
     initFunction <- function() list(p=rep(1/2,6), phi=rep(1/2,3), alpha=array(0,c(2,3,2)), x=x_initExp)
-    parameters <- c('p','phi','psi')
+    ##parameters <- c('p','phi','psi')
+    parameters <- c('p','phi','alpha')
     library(R2WinBUGS) 
     library(R2jags) 
     t <- system.time({ls <- jags(jags_data, initFunction, parameters, "goose.jags", n.chains = 1, n.thin = 1, n.iter = niter, n.burnin = 2000, working.directory = getwd())})
@@ -785,7 +786,8 @@ model {
     ## Initial values 
     initFunction <- function(){list(s = runif((dim(rCH)[2]-1), 0, 1), z = ms_init_z(rCH, f))}
     ## Parameters monitored 
-    parameters <- c("s", "psiV", "psiF", "psiD") 
+    ##parameters <- c("s", "psiV", "psiF", "psiD")
+    parameters <- c('a', 'b', 'c', 's')
     library(R2WinBUGS) 
     library(R2jags) 
     ## Call JAGS from R (BRT 3 min) 

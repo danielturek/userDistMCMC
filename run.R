@@ -1,5 +1,5 @@
 
-fast <- FALSE
+fast <- TRUE
 trunc <- if(fast) TRUE else FALSE
 niter <- if(fast) 5000 else 100000
 setwd('~/GitHub/userDistMCMC')
@@ -15,13 +15,13 @@ save(results, file='~/GitHub/userDistMCMC/resultsNew.RData')
 results$run('dipper', dipperCJS,  MCMCs = c('nimble','autoBlock'), MCMCnames = c('nimbleCJS', 'autoBlockCJS'))
 save(results, file='~/GitHub/userDistMCMC/resultsNew.RData')
 
-results$run('orchid', orchidDHMM, MCMCs = c('nimble','autoBlock'), MCMCnames = c('nimbleDHMM','autoBlockDHMM'), monitors = c('s','psiV','psiF','psiD'))
+results$run('orchid', orchidDHMM, MCMCs = c('nimble','autoBlock'), MCMCnames = c('nimbleDHMM','autoBlockDHMM'))
 save(results, file='~/GitHub/userDistMCMC/resultsNew.RData')
 
 results$run('orchid', orchidJAGSfunction,                          MCMCnames = c('jags'))
 save(results, file='~/GitHub/userDistMCMC/resultsNew.RData')
 
-results$run('goose',  gooseDHMM,  MCMCs = c('nimble','autoBlock'), MCMCnames = c('nimbleDHMM','autoBlockDHMM'), monitors = c('p','phi','psi'))
+results$run('goose',  gooseDHMM,  MCMCs = c('nimble','autoBlock'), MCMCnames = c('nimbleDHMM','autoBlockDHMM'))
 save(results, file='~/GitHub/userDistMCMC/resultsNew.RData')
 
 results$run('goose',  gooseExpJAGSfunction,                        MCMCnames = c('jagsExp'))
