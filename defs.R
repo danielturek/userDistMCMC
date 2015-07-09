@@ -146,7 +146,7 @@ resultsObjectClassDef <- R6Class(
                     suiteOut <- MCMCsuite(
                         mod$code, mod$constants, mod$data, mod$inits,
                         MCMCs = MCMCs,
-                        MCMCdefs = list(autoBlock = quote(configureMCMC(Rmodel, autoBlock=TRUE, verbose=TRUE))),               ###  DELETE
+                        MCMCdefs = list(autoBlock = quote(configureMCMC(Rmodel, autoBlock=TRUE, verbose=TRUE))),               ###  optional line -- makes autoBlock() verbose -- DELETE?
                         niter = self$niter,
                         monitors = monitors,
                         summaryStats = self$statNames,
@@ -283,11 +283,11 @@ results_plot <- function(out) {
         E <- out[[name]]$Efficiency
         df <- data.frame(mcmc=rep(dimnames(E)[[1]],each=dim(E)[2]), param=rep(dimnames(E)[[2]],dim(E)[1]), E=as.numeric(t(E)))
         dev.new(width=10, height=5)
-        ymax <- max(df$E)
-        p1 <- ggplot(df, aes(mcmc, E, fill=mcmc)) + stat_summary(fun.y='mean', geom='bar') + ggtitle(paste0(name, '\nMean')) + ylim(c(0,ymax)) + theme(legend.position='none')
-        p2 <- ggplot(df, aes(mcmc, E, fill=mcmc)) + stat_summary(fun.y='min', geom='bar') + ggtitle(paste0(name, '\nMin')) + ylim(c(0,ymax)) + theme(legend.position='none')
-        p3 <- ggplot(df, aes(mcmc, E, colour=mcmc)) + geom_point(size=3) + ylim(c(0,ymax)) + ggtitle(paste0(name, '\npoints')) + theme(legend.position='none')
-        p4 <- ggplot(df, aes(mcmc, E, fill=mcmc)) + stat_summary(fun.y='mean', geom='bar') + ylim(c(0,ymax))
+        ##ymax <- max(df$E)   ## no longer putting on the same scale
+        p1 <- ggplot(df, aes(mcmc, E, fill=mcmc)) + stat_summary(fun.y='mean', geom='bar') + ggtitle(paste0(name, '\nMean')) + theme(legend.position='none') ## + ylim(c(0,ymax))
+        p2 <- ggplot(df, aes(mcmc, E, fill=mcmc)) + stat_summary(fun.y='min', geom='bar') + ggtitle(paste0(name, '\nMin'))   + theme(legend.position='none') ## + ylim(c(0,ymax))
+        p3 <- ggplot(df, aes(mcmc, E, colour=mcmc)) + geom_point(size=3) + ggtitle(paste0(name, '\npoints')) + theme(legend.position='none') ## + ylim(c(0,ymax))
+        p4 <- ggplot(df, aes(mcmc, E, fill=mcmc)) + stat_summary(fun.y='mean', geom='bar')## + ylim(c(0,ymax))
         multiplot(p1, p2, p3, p4, cols=4)
         dev.copy2pdf(file=paste0('~/GitHub/userDistMCMC/plot_', name, '.pdf'))
     }
