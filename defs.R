@@ -146,6 +146,7 @@ resultsObjectClassDef <- R6Class(
                     suiteOut <- MCMCsuite(
                         mod$code, mod$constants, mod$data, mod$inits,
                         MCMCs = MCMCs,
+                        MCMCdefs = list(autoBlock = quote(configureMCMC(Rmodel, autoBlock=TRUE, verbose=TRUE))),               ###  DELETE
                         niter = self$niter,
                         monitors = monitors,
                         summaryStats = self$statNames,
@@ -217,6 +218,25 @@ resultsObjectClassDef <- R6Class(
 )
 
 
+results_check <- function(out) {
+    for(i in seq_along(out)) {
+        name <- names(out)[i]
+        summary <- out[[i]]$summary
+        for(param in dimnames(summary)[[3]]) {
+            paramSummary <- summary[,,param]
+            paramAvg <- mean(paramSummary[,'mean'])
+            for(j in 1:dim(paramSummary)[1]) {
+                mcmcName <- dimnames(paramSummary)[[1]][j]
+                mcmcMean <- paramSummary[j,'mean']
+                mcmcSD <- paramSummary[j,'sd']
+                if(abs(mcmcMean-paramAvg) > mcmcSD)   ### could relax: abs(...) > mcmcSD * 2
+                    message('in model ', name, ', ', mcmcName, ' sampling of \'', param, '\' appears to be wrong')
+            }
+        }
+    }
+}
+
+
 
 
 ## Multiple plot function
@@ -258,7 +278,7 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
 }
 
 
-results_plots <- function(out) {
+results_plot <- function(out) {
     for(name in names(out)) {
         E <- out[[name]]$Efficiency
         df <- data.frame(mcmc=rep(dimnames(E)[[1]],each=dim(E)[2]), param=rep(dimnames(E)[[2]],dim(E)[1]), E=as.numeric(t(E)))
