@@ -635,7 +635,7 @@ model {
     t <- system.time({ls <- jags(jags_data, initFunction, parameters, "goose.jags", n.chains = 1, n.thin = 1, n.iter = niter, n.burnin = 2000, working.directory = getwd())})
     ar <- ls$BUGSoutput$sims.array    ## using sims.array is consistent with MCMCsuite
     ar <- ar[,1,]     ## drop middle index
-    ar <- ar[, -1]    ## drop deviance
+    ar <- ar[, dimnames(ar)[[2]] != 'deviance']    ## drop deviance
     summaryStats <- c('mean', 'median', 'sd', 'CI95_low', 'CI95_upp', 'effectiveSize')
     library(coda)
     CI95_low <- function(x) quantile(x, probs = 0.025)
@@ -788,13 +788,13 @@ model {
     ## Parameters monitored 
     ##parameters <- c("s", "psiV", "psiF", "psiD")
     parameters <- c('a', 'b', 'c', 's')
-    library(R2WinBUGS) 
-    library(R2jags) 
+    library(R2WinBUGS)
+    library(R2jags)
     ## Call JAGS from R (BRT 3 min) 
     t <- system.time({ls <- jags(jags_data, initFunction, parameters, "ladyslipper.jags", n.chains = 1, n.thin = 1, n.iter = niter, n.burnin = 2000, working.directory = getwd())})
     ar <- ls$BUGSoutput$sims.array    ## using sims.array is consistent with MCMCsuite
     ar <- ar[,1,]     ## drop middle index
-    ar <- ar[, -1]    ## drop deviance
+    ar <- ar[, dimnames(ar)[[2]] != 'deviance']    ## drop deviance
     summaryStats <- c('mean', 'median', 'sd', 'CI95_low', 'CI95_upp', 'effectiveSize')
     library(coda)
     CI95_low <- function(x) quantile(x, probs = 0.025)
