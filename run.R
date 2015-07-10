@@ -1,5 +1,5 @@
 
-fast <- FALSE
+fast <- TRUE
 trunc <- if(fast) TRUE else FALSE
 niter <- if(fast) 5000 else 100000
 setwd('~/GitHub/userDistMCMC')
