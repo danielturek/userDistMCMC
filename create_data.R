@@ -3,7 +3,7 @@
 ## dipper
 ############################
 
-load('~/GitHub/legacy/dipper/dipperData.RData')
+load('~/GitHub/userDistMCMC/dipperData.RData')
 ## optionally truncate data:
 last <- apply(y, 1, function(hist) max(which(hist==1)))
 yDHMM <- 2 - y
