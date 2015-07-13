@@ -3,6 +3,7 @@
 setwd('~/GitHub/userDistMCMC')
 source('defs.R')
 load('~/GitHub/userDistMCMC/results.RData')
+##load('~/GitHub/userDistMCMC/resultsGandalf.RData')
 ##load('~/GitHub/userDistMCMC/resultsNew.RData')
 
 
