@@ -33,6 +33,9 @@ save(results, file='~/GitHub/userDistMCMC/resultsNew.RData')
 results$run('goose',  gooseExpJAGSfunction,                        MCMCnames = c('jagsExp'))
 save(results, file='~/GitHub/userDistMCMC/resultsNew.RData')
 
+## out of ordering: slice sampling for 'orchid' model, which will take forever:
+results$run('orchid', orchidDHMM, MCMCs = c('nimble_slice'),       MCMCnames = c('sliceDHMM'))
+save(results, file='~/GitHub/userDistMCMC/resultsNew.RData')
 
 
 
