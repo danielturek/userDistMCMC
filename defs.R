@@ -151,6 +151,7 @@ resultsObjectClassDef <- R6Class(
                         monitors = monitors,
                         summaryStats = self$statNames,
                         makePlot = FALSE)
+                    message('MCMCsuite() APPLIED effectiveSize() TO ', dim(suiteOut$samples)[3], ' NIMBLE SAMPLES')
                     if(is.null(self$out[[name]])) self$out[[name]] <- self$newListEntry(dimnames(suiteOut$summary)[[3]])
                     MCMCnamesToUse <- if(!missing(MCMCnames)) MCMCnames else MCMCs
                     newTimings <- suiteOut$timing[MCMCs]

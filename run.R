@@ -15,6 +15,12 @@ save(results, file='~/GitHub/userDistMCMC/resultsNew.RData')
 results$run('dipper', dipperCJS,  MCMCs = c('nimble','autoBlock'), MCMCnames = c('nimbleCJS', 'autoBlockCJS'))
 save(results, file='~/GitHub/userDistMCMC/resultsNew.RData')
 
+results$run('dipper', dipperChiJAGSfunction,                       MCMCnames = c('jagsChi'))
+save(results, file='~/GitHub/userDistMCMC/resultsNew.RData')
+
+results$run('dipper', dipperPoissonJAGSfunction,                   MCMCnames = c('jagsPoisson'))
+save(results, file='~/GitHub/userDistMCMC/resultsNew.RData')
+
 results$run('orchid', orchidDHMM, MCMCs = c('nimble','autoBlock'), MCMCnames = c('nimbleDHMM','autoBlockDHMM'))
 save(results, file='~/GitHub/userDistMCMC/resultsNew.RData')
 
@@ -26,15 +32,6 @@ save(results, file='~/GitHub/userDistMCMC/resultsNew.RData')
 
 results$run('goose',  gooseExpJAGSfunction,                        MCMCnames = c('jagsExp'))
 save(results, file='~/GitHub/userDistMCMC/resultsNew.RData')
-
-
-##results$run('dipper', dipperDHMM, MCMCs = c('nimble','autoBlock'), MCMCnames = c('nimbleDHMM','autoBlockDHMM'))
-
-
-
-
-
-
 
 
 
