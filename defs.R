@@ -30,14 +30,14 @@ dDHMM <- nimbleFunction(
             ##            print('pi entering into this iteration:'); print(pi) }
             if(useZt) Zind <- t
             Zcurrent <- Z[,,Zind]
-            if(t == 1) {    ## condition on first observation
-                for(i in 1:dim(Zcurrent)[1])
-                    Zcurrent[i, ] <- Zcurrent[i, ] * condition[i]
-                for(j in 1:dim(Zcurrent)[2]) {
-                    s <- sum(Zcurrent[ ,j])
-                    if(s != 0) Zcurrent[ ,j] <- Zcurrent[ ,j] / s
-                }
-            }
+            ##if(t == 1) {    ## condition on first observation
+            ##    for(i in 1:dim(Zcurrent)[1])
+            ##        Zcurrent[i, ] <- Zcurrent[i, ] * condition[i]
+            ##    for(j in 1:dim(Zcurrent)[2]) {
+            ##        s <- sum(Zcurrent[ ,j])
+            ##        if(s != 0) Zcurrent[ ,j] <- Zcurrent[ ,j] / s
+            ##    }
+            ##}
             Zpi <- Zcurrent[x[t], ] * pi
             sumZpi <- sum(Zpi)
             logL <- logL + log(sumZpi) * mult
