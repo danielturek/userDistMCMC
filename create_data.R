@@ -108,6 +108,7 @@ model {
     library(R2WinBUGS) 
     library(R2jags) 
     t <- system.time({ls <- jags(jags_data, initFunction, parameters, "dipperChi.jags", n.chains = 1, n.thin = 1, n.iter = niter, n.burnin = 2000, working.directory = getwd())})
+    unlink('dipperChi.jags')
     ar <- ls$BUGSoutput$sims.array    ## using sims.array is consistent with MCMCsuite
     ar <- ar[,1,]     ## drop middle index
     ar <- ar[, dimnames(ar)[[2]] != 'deviance']    ## drop deviance
@@ -163,6 +164,7 @@ model {
     library(R2WinBUGS) 
     library(R2jags) 
     t <- system.time({ls <- jags(jags_data, initFunction, parameters, "dipperPoisson.jags", n.chains = 1, n.thin = 1, n.iter = niter, n.burnin = 2000, working.directory = getwd())})
+    unlink('dipperPoisson.jags')
     ar <- ls$BUGSoutput$sims.array    ## using sims.array is consistent with MCMCsuite
     ar <- ar[,1,]     ## drop middle index
     ar <- ar[, dimnames(ar)[[2]] != 'deviance']    ## drop deviance
@@ -744,6 +746,7 @@ model {
     library(R2WinBUGS) 
     library(R2jags) 
     t <- system.time({ls <- jags(jags_data, initFunction, parameters, "goose.jags", n.chains = 1, n.thin = 1, n.iter = niter, n.burnin = 2000, working.directory = getwd())})
+    unlink('goose.jags')
     ar <- ls$BUGSoutput$sims.array    ## using sims.array is consistent with MCMCsuite
     ar <- ar[,1,]     ## drop middle index
     ar <- ar[, dimnames(ar)[[2]] != 'deviance']    ## drop deviance
@@ -904,6 +907,7 @@ model {
     library(R2jags)
     ## Call JAGS from R (BRT 3 min) 
     t <- system.time({ls <- jags(jags_data, initFunction, parameters, "ladyslipper.jags", n.chains = 1, n.thin = 1, n.iter = niter, n.burnin = 2000, working.directory = getwd())})
+    unlink('ladyslipper.jags')
     ar <- ls$BUGSoutput$sims.array    ## using sims.array is consistent with MCMCsuite
     ar <- ar[,1,]     ## drop middle index
     ar <- ar[, dimnames(ar)[[2]] != 'deviance']    ## drop deviance
