@@ -4,5 +4,5 @@ references
 models.RData
 model.txt
 run.Rout
-plot_*
+plots*
 
