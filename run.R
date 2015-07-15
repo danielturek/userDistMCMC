@@ -16,10 +16,13 @@ results <- resultsObjectDef(niter=niter)
 ##save(results, file='~/GitHub/userDistMCMC/resultsNew.RData')
 
 ##results$run('orchid', orchidDHMM, MCMCs = c('nimble','autoBlock'), MCMCnames = c('nimbleDHMM','autoBlockDHMM'))
-results$run('orchid', orchidDHMM, MCMCs = c('nimble','nimble_slice'), MCMCnames = c('nimbleDHMM','sliceDHMM'))
+results$run('orchid', orchidDHMM, MCMCs = c('nimble'), MCMCnames = c('nimbleDHMM'))
 save(results, file='~/GitHub/userDistMCMC/resultsNew.RData')
 
 results$run('orchid', orchidJAGSfunction,                          MCMCnames = c('jags'))
+save(results, file='~/GitHub/userDistMCMC/resultsNew.RData')
+
+results$run('orchid', orchidDHMM, MCMCs = c('nimble_slice'), MCMCnames = c('sliceDHMM'))
 save(results, file='~/GitHub/userDistMCMC/resultsNew.RData')
 
 ##results$run('goose',  gooseDHMM,  MCMCs = c('nimble','autoBlock'), MCMCnames = c('nimbleDHMM','autoBlockDHMM'))
