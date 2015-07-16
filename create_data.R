@@ -6,8 +6,10 @@
 load('~/GitHub/userDistMCMC/dipperData.RData')
 ## optionally truncate data:
 last <- apply(y, 1, function(hist) max(which(hist==1)))
+nSightings <- apply(y, 1, function(hist) sum(hist, na.rm=TRUE))
 yDHMM <- 2 - y
-if(trunc) { ind <- 1:3;   nind<-length(ind);   first<-first[ind];   last<-last[ind];   y<-y[ind,,drop=FALSE];   yDHMM<-yDHMM[ind,,drop=FALSE];   x_init<-x_init[ind,,drop=FALSE] }
+if(trunc) { ind <- 1:3;   nind<-length(ind);   first<-first[ind];   last<-last[ind];   nSightings<-nSightings[ind];   y<-y[ind,,drop=FALSE];   yDHMM<-yDHMM[ind,,drop=FALSE];   x_init<-x_init[ind,,drop=FALSE] }
+
 
 
 ## dipper (with latent states, suitable for jags)
@@ -63,12 +65,19 @@ dipperDHMM <- list(code=code, constants=constants, data=data, inits=inits)
 code <- quote({
     phi ~ dunif(0, 1)
     p ~ dunif(0, 1)
-    for (i in 1:nind) {
-        y[i, first[i]:k] ~ dCJS(length=k-first[i]+1, last=last[i]-first[i]+1, phi=phi, p=p)
-    }
+    ##for (i in 1:nind) {
+    ##    y[i, first[i]:k] ~ dCJS(length=k-first[i]+1, last=last[i]-first[i]+1, phi=phi, p=p)
+    ##}
+    chi[k] <- 1
+    for(j in 1:(k-1))
+        chi[k-j] <- (1-phi) + phi * (1-p) * chi[k-j+1]
+    for(j in 1:k)
+        logChi[j] <- log(chi[j])
+    for(i in 1:nind)
+        onesVector[i] ~ dCJS(first=first[i], last=last[i], nSightings=nSightings[i], phi=phi, p=p, logChi=logChi[1:k])
 })
-constants <- list(k=k, nind=nind, first=first, last=last)
-data      <- list(y=y)
+constants <- list(k=k, nind=nind, first=first, last=last, nSightings=nSightings)
+data      <- list(onesVector=rep(1,nind))
 inits     <- list(phi=0.6, p=0.9)
 dipperCJS <- list(code=code, constants=constants, data=data, inits=inits)
 

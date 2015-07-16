@@ -12,11 +12,11 @@ results <- resultsObjectDef(niter=niter)
 results$run('dipper', dipper,     MCMCs = c('nimble','autoBlock','jags'))
 save(results, file='~/GitHub/userDistMCMC/resultsNew.RData')
 
-results$run('dipper', dipperCJS,  MCMCs = c('nimble','autoBlock'), MCMCnames = c('nimbleCJS', 'autoBlockCJS'))
+results$run('dipper', dipperCJS,  MCMCs = c('nimble','autoBlock'), MCMCnames = c('nimbleCJS','autoBlockCJS'))
 save(results, file='~/GitHub/userDistMCMC/resultsNew.RData')
 
-results$run('dipper', dipperChiJAGSfunction,                       MCMCnames = c('jagsChi'))
-save(results, file='~/GitHub/userDistMCMC/resultsNew.RData')
+##results$run('dipper', dipperChiJAGSfunction,                       MCMCnames = c('jagsChi'))
+##save(results, file='~/GitHub/userDistMCMC/resultsNew.RData')
 
 results$run('dipper', dipperPoissonJAGSfunction,                   MCMCnames = c('jagsPoisson'))
 save(results, file='~/GitHub/userDistMCMC/resultsNew.RData')

@@ -74,15 +74,17 @@ rDHMM <- nimbleFunction(
 
 
 dCJS <- nimbleFunction(
-    run = function(x = double(1),
-        length = double(), last = double(), phi = double(), p = double(),
+    run = function(x = double(),
+        ##length = double(), last = double(), phi = double(), p = double(),
+        first = double(), last = double(), nSightings = double(), phi = double(), p = double(), logChi = double(1),
         log.p = double()) {
-        L <- 1
-        if(length > last)
-            for(i in 1:(length-last))
-                L <- 1-phi + phi*(1-p)*L
-        nSightings <- sum(x[1:last])
-        logL <- log(L) + (last-1)*log(phi) + (nSightings-1)*log(p) + (last-nSightings)*log(1-p)
+        ##L <- 1
+        ##if(length > last)
+        ##    for(i in 1:(length-last))
+        ##        L <- 1-phi + phi*(1-p)*L
+        ##nSightings <- sum(x[1:last])
+        ##logL <- log(L) + (last-1)*log(phi) + (nSightings-1)*log(p) + (last-nSightings)*log(1-p)
+        logL <- (last-first)*log(phi) + (nSightings-1)*log(p) + (last-first-nSightings+1)*log(1-p) + logChi[last]
         returnType(double())
         if(log.p) return(logL) else return(exp(logL))
     }
@@ -90,11 +92,12 @@ dCJS <- nimbleFunction(
 
 rCJS <- nimbleFunction(
     run = function(n = integer(),
-        length = double(), last = double(), phi = double(), p = double()) {
+        ##length = double(), last = double(), phi = double(), p = double())
+        first = double(), last = double(), nSightings = double(), phi = double(), p = double(), logChi = double(1)) {
         if(n != 1) print('should only specify n=1 in rCJS() distribution')
         print('STILL NEED TO WRITE THE rCJS() METHOD!')
-        returnType(double(1))
-        return(nimVector(1, length))
+        returnType(double())
+        return(1)
     }
 )
 
@@ -111,9 +114,10 @@ registerDistributions(list(
         discrete = TRUE
     ),
     dCJS = list(
-        BUGSdist = 'dCJS(length, last, phi, p)',
-        types = c('value = double(1)',
-            'length = double()', 'last = double()', 'phi = double()', 'p = double()'),
+        ##BUGSdist = 'dCJS(length, last, phi, p)',
+        BUGSdist = 'dCJS(first, last, nSightings, phi, p, logChi)',
+        types = c('value = double()',
+            'first = double()', 'last = double()', 'nSightings = double()', 'phi = double()', 'p = double()', 'logChi = double(1)'),
         discrete = TRUE
     )
 ))
@@ -290,7 +294,7 @@ results_plot <- function(out) {
         p3 <- ggplot(df, aes(mcmc, E, colour=mcmc)) + geom_point(size=3) + ggtitle(paste0(name, '\npoints')) + theme(legend.position='none') ## + ylim(c(0,ymax))
         p4 <- ggplot(df, aes(mcmc, E, fill=mcmc)) + stat_summary(fun.y='mean', geom='bar')## + ylim(c(0,ymax))
         multiplot(p1, p2, p3, p4, cols=4)
-        dev.copy2pdf(file=paste0('~/GitHub/userDistMCMC/plot_', name, '.pdf'))
+        dev.copy2pdf(file=paste0('~/GitHub/userDistMCMC/plots/plot_', name, '.pdf'))
     }
 }
 
