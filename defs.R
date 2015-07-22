@@ -271,7 +271,7 @@ results_quickplot = function(out) {
         df <- data.frame(mcmc=rep(dimnames(E)[[1]],each=dim(E)[2]), param=rep(dimnames(E)[[2]],dim(E)[1]), E=as.numeric(t(E)))
         dev.new(width=10, height=5)
         ##ymax <- max(df$E)   ## no longer putting on the same scale
-        p1 <- ggplot(df, aes(mcmc, E, fill=mcmc)) + stat_summary(fun.y='mean', geom='bar') + ggtitle(paste0(name, '\nMean')) + theme(legend.position='none') ## + ylim(c(0,ymax))
+        p1 <- ggplot(df, aes(mcmc, E, fill=mcmc), xlab='') + stat_summary(fun.y='mean', geom='bar') + ggtitle(paste0(name, '\nMean')) + theme(legend.position='none') ## + ylim(c(0,ymax))
         p2 <- ggplot(df, aes(mcmc, E, fill=mcmc)) + stat_summary(fun.y='min', geom='bar') + ggtitle(paste0(name, '\nMin'))   + theme(legend.position='none') ## + ylim(c(0,ymax))
         p3 <- ggplot(df, aes(mcmc, E, colour=mcmc)) + geom_point(size=3) + ggtitle(paste0(name, '\npoints')) + theme(legend.position='none') ## + ylim(c(0,ymax))
         p4 <- ggplot(df, aes(mcmc, E, fill=mcmc)) + stat_summary(fun.y='mean', geom='bar')## + ylim(c(0,ymax))

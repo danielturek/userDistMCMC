@@ -9,10 +9,10 @@ load('models.RData')
 
 results <- resultsObjectDef(niter=niter)
 
-results$run('dipper', dipper,     MCMCs = c('nimble','autoBlock','jags'))
+results$run('dipper', dipper,     MCMCs = c('nimble','nimble_slice','autoBlock','jags'))
 save(results, file='~/GitHub/userDistMCMC/resultsNew.RData')
 
-results$run('dipper', dipperCJS,  MCMCs = c('nimble','autoBlock'), MCMCnames = c('nimbleCJS','autoBlockCJS'))
+results$run('dipper', dipperCJS,  MCMCs = c('nimble','nimble_slice','autoBlock'), MCMCnames = c('nimbleCJS','nimbleCJS_slice','autoBlockCJS'))
 save(results, file='~/GitHub/userDistMCMC/resultsNew.RData')
 
 ##results$run('dipper', dipperChiJAGSfunction,                       MCMCnames = c('jagsChi'))
