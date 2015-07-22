@@ -7,7 +7,7 @@ load('~/GitHub/userDistMCMC/results.RData')
 
 
 results$check()
-results$plot()
+results$quickplot()
 
 
 
@@ -17,8 +17,7 @@ setwd('~/GitHub/userDistMCMC')
 source('defs.R')
 load('~/GitHub/userDistMCMC/resultsSave.RData')
 resultsOld <- results
-niter <- resultsOld$niter
-results <- resultsObjectDef(niter=niter)
+results <- resultsObjectDef(niter=resultsOld$niter)
 results$out <- resultsOld$out
 results$processOutIntoDF()
 save(results, file='~/GitHub/userDistMCMC/results.RData')

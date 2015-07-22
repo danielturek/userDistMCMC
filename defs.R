@@ -236,7 +236,6 @@ resultsObjectClassDef <- R6Class(
                 dfNew <- data.frame(model=mod, mcmc=mcmcVec, param=paramVec, timing=timingVec, ESS=ESSvec, Efficiency=Effvec)
                 df <- rbind(df, dfNew)
             }
-            ##return(df)
             self$df <- df
         },
         check = function() {
@@ -251,42 +250,35 @@ resultsObjectClassDef <- R6Class(
                         mcmcName <- dimnames(paramSummary)[[1]][j]
                         mcmcMean <- paramSummary[j,'mean']
                         mcmcSD <- paramSummary[j,'sd']
-                        if(abs(mcmcMean-paramAvg) > mcmcSD)   ### could relax: abs(...) > mcmcSD * 2
+                        if(abs(mcmcMean-paramAvg) > mcmcSD)   ### relax: abs(...) > mcmcSD * 2
                             message('in model ', name, ', ', mcmcName, ' sampling of \'', param, '\' appears to be wrong')
                     }
                 }
             }
-
         },
-        plot = function() {
-            library(ggplot2)
-            out <- self$out
-            for(name in names(out)) {
-                E <- out[[name]]$Efficiency
-                df <- data.frame(mcmc=rep(dimnames(E)[[1]],each=dim(E)[2]), param=rep(dimnames(E)[[2]],dim(E)[1]), E=as.numeric(t(E)))
-                dev.new(width=10, height=5)
-                ##ymax <- max(df$E)   ## no longer putting on the same scale
-                p1 <- ggplot(df, aes(mcmc, E, fill=mcmc)) + stat_summary(fun.y='mean', geom='bar') + ggtitle(paste0(name, '\nMean')) + theme(legend.position='none') ## + ylim(c(0,ymax))
-                p2 <- ggplot(df, aes(mcmc, E, fill=mcmc)) + stat_summary(fun.y='min', geom='bar') + ggtitle(paste0(name, '\nMin'))   + theme(legend.position='none') ## + ylim(c(0,ymax))
-                p3 <- ggplot(df, aes(mcmc, E, colour=mcmc)) + geom_point(size=3) + ggtitle(paste0(name, '\npoints')) + theme(legend.position='none') ## + ylim(c(0,ymax))
-                p4 <- ggplot(df, aes(mcmc, E, fill=mcmc)) + stat_summary(fun.y='mean', geom='bar')## + ylim(c(0,ymax))
-                multiplot(p1, p2, p3, p4, cols=4)
-                dev.copy2pdf(file=paste0('~/GitHub/userDistMCMC/plots/plot_', name, '.pdf'))
-            }
-
+        quickplot = function() {
+            results_quickplot(self$out)
         }
     )
 )
 
 
 
-
-
-
-
-
-
-
+results_quickplot = function(out) {
+    library(ggplot2)
+    for(name in names(out)) {
+        E <- out[[name]]$Efficiency
+        df <- data.frame(mcmc=rep(dimnames(E)[[1]],each=dim(E)[2]), param=rep(dimnames(E)[[2]],dim(E)[1]), E=as.numeric(t(E)))
+        dev.new(width=10, height=5)
+        ##ymax <- max(df$E)   ## no longer putting on the same scale
+        p1 <- ggplot(df, aes(mcmc, E, fill=mcmc)) + stat_summary(fun.y='mean', geom='bar') + ggtitle(paste0(name, '\nMean')) + theme(legend.position='none') ## + ylim(c(0,ymax))
+        p2 <- ggplot(df, aes(mcmc, E, fill=mcmc)) + stat_summary(fun.y='min', geom='bar') + ggtitle(paste0(name, '\nMin'))   + theme(legend.position='none') ## + ylim(c(0,ymax))
+        p3 <- ggplot(df, aes(mcmc, E, colour=mcmc)) + geom_point(size=3) + ggtitle(paste0(name, '\npoints')) + theme(legend.position='none') ## + ylim(c(0,ymax))
+        p4 <- ggplot(df, aes(mcmc, E, fill=mcmc)) + stat_summary(fun.y='mean', geom='bar')## + ylim(c(0,ymax))
+        multiplot(p1, p2, p3, p4, cols=4)
+        dev.copy2pdf(file=paste0('~/GitHub/userDistMCMC/plots/plot_', name, '.pdf'))
+    }
+}
 
 ## Multiple plot function
 ##
