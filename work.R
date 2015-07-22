@@ -3,18 +3,28 @@
 setwd('~/GitHub/userDistMCMC')
 source('defs.R')
 load('~/GitHub/userDistMCMC/results.RData')
-##load('~/GitHub/userDistMCMC/resultsGandalf.RData')
 ##load('~/GitHub/userDistMCMC/resultsNew.RData')
 
 
-results_check(results$out)
-results_plot(results$out)
+results$check()
+results$plot()
 
 
 
-## rm(list=ls())
-## a <- 2
-## source('defs.R')
-## if(a==1) load('~/GitHub/userDistMCMC/results.RData')
-## if(a==2) load('~/GitHub/userDistMCMC/resultsGandalf.RData')
-## lapply(results$out, function(a) a$timing)
+
+## migrating to new results
+setwd('~/GitHub/userDistMCMC')
+source('defs.R')
+load('~/GitHub/userDistMCMC/resultsSave.RData')
+resultsOld <- results
+niter <- resultsOld$niter
+results <- resultsObjectDef(niter=niter)
+results$out <- resultsOld$out
+results$processOutIntoDF()
+save(results, file='~/GitHub/userDistMCMC/results.RData')
+
+
+
+
+
+

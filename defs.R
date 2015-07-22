@@ -133,6 +133,7 @@ resultsObjectClassDef <- R6Class(
     'resultsObjectClassDef',
     public = list(
         out = list(),
+        df = NULL,
         statNames  = c('mean', 'sd', 'CI95_low', 'CI95_upp', 'effectiveSize'),
         statNames0 = c('mean', 'sd', 'CI95_low', 'CI95_upp'),
         niter = NULL,
@@ -206,6 +207,7 @@ resultsObjectClassDef <- R6Class(
             message(totTime, ' minute', if(totTime==1) '' else 's')
             message('*******************************************************')
             message('*******************************************************')
+            processOutIntoDF()
             return(invisible(NULL))
         },
         newListEntry = function(paramNames) {
@@ -218,28 +220,70 @@ resultsObjectClassDef <- R6Class(
             l$Efficiency <- array(as.numeric(NA), c(0,length(paramNames)))
             dimnames(l$Efficiency) <- list(NULL, paramNames)
             return(l)
+        },
+        processOutIntoDF = function() {
+            out <- self$out
+            df <- data.frame(model=character(), mcmc=character(), param=character(), timing=numeric(), ESS=numeric(), Efficiency=numeric())
+            models <- names(out)
+            for(mod in models) {
+                mcmcs <- dimnames(out[[mod]]$ESS)[[1]]
+                params <- dimnames(out[[mod]]$ESS)[[2]]
+                mcmcVec <- rep(mcmcs, each=length(params))
+                paramVec <- rep(params, length(mcmcs))
+                timingVec <- as.numeric(out[[mod]]$timing[mcmcVec])
+                ESSvec <- as.numeric(t(out[[mod]]$ESS))
+                Effvec <- as.numeric(t(out[[mod]]$Efficiency))
+                dfNew <- data.frame(model=mod, mcmc=mcmcVec, param=paramVec, timing=timingVec, ESS=ESSvec, Efficiency=Effvec)
+                df <- rbind(df, dfNew)
+            }
+            ##return(df)
+            self$df <- df
+        },
+        check = function() {
+            out <- self$out
+            for(i in seq_along(out)) {
+                name <- names(out)[i]
+                summary <- out[[i]]$summary
+                for(param in dimnames(summary)[[3]]) {
+                    paramSummary <- summary[,,param]
+                    paramAvg <- mean(paramSummary[,'mean'])
+                    for(j in 1:dim(paramSummary)[1]) {
+                        mcmcName <- dimnames(paramSummary)[[1]][j]
+                        mcmcMean <- paramSummary[j,'mean']
+                        mcmcSD <- paramSummary[j,'sd']
+                        if(abs(mcmcMean-paramAvg) > mcmcSD)   ### could relax: abs(...) > mcmcSD * 2
+                            message('in model ', name, ', ', mcmcName, ' sampling of \'', param, '\' appears to be wrong')
+                    }
+                }
+            }
+
+        },
+        plot = function() {
+            library(ggplot2)
+            out <- self$out
+            for(name in names(out)) {
+                E <- out[[name]]$Efficiency
+                df <- data.frame(mcmc=rep(dimnames(E)[[1]],each=dim(E)[2]), param=rep(dimnames(E)[[2]],dim(E)[1]), E=as.numeric(t(E)))
+                dev.new(width=10, height=5)
+                ##ymax <- max(df$E)   ## no longer putting on the same scale
+                p1 <- ggplot(df, aes(mcmc, E, fill=mcmc)) + stat_summary(fun.y='mean', geom='bar') + ggtitle(paste0(name, '\nMean')) + theme(legend.position='none') ## + ylim(c(0,ymax))
+                p2 <- ggplot(df, aes(mcmc, E, fill=mcmc)) + stat_summary(fun.y='min', geom='bar') + ggtitle(paste0(name, '\nMin'))   + theme(legend.position='none') ## + ylim(c(0,ymax))
+                p3 <- ggplot(df, aes(mcmc, E, colour=mcmc)) + geom_point(size=3) + ggtitle(paste0(name, '\npoints')) + theme(legend.position='none') ## + ylim(c(0,ymax))
+                p4 <- ggplot(df, aes(mcmc, E, fill=mcmc)) + stat_summary(fun.y='mean', geom='bar')## + ylim(c(0,ymax))
+                multiplot(p1, p2, p3, p4, cols=4)
+                dev.copy2pdf(file=paste0('~/GitHub/userDistMCMC/plots/plot_', name, '.pdf'))
+            }
+
         }
     )
 )
 
 
-results_check <- function(out) {
-    for(i in seq_along(out)) {
-        name <- names(out)[i]
-        summary <- out[[i]]$summary
-        for(param in dimnames(summary)[[3]]) {
-            paramSummary <- summary[,,param]
-            paramAvg <- mean(paramSummary[,'mean'])
-            for(j in 1:dim(paramSummary)[1]) {
-                mcmcName <- dimnames(paramSummary)[[1]][j]
-                mcmcMean <- paramSummary[j,'mean']
-                mcmcSD <- paramSummary[j,'sd']
-                if(abs(mcmcMean-paramAvg) > mcmcSD)   ### could relax: abs(...) > mcmcSD * 2
-                    message('in model ', name, ', ', mcmcName, ' sampling of \'', param, '\' appears to be wrong')
-            }
-        }
-    }
-}
+
+
+
+
+
 
 
 
@@ -283,44 +327,3 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
 }
 
 
-results_plot <- function(out) {
-    for(name in names(out)) {
-        E <- out[[name]]$Efficiency
-        df <- data.frame(mcmc=rep(dimnames(E)[[1]],each=dim(E)[2]), param=rep(dimnames(E)[[2]],dim(E)[1]), E=as.numeric(t(E)))
-        dev.new(width=10, height=5)
-        ##ymax <- max(df$E)   ## no longer putting on the same scale
-        p1 <- ggplot(df, aes(mcmc, E, fill=mcmc)) + stat_summary(fun.y='mean', geom='bar') + ggtitle(paste0(name, '\nMean')) + theme(legend.position='none') ## + ylim(c(0,ymax))
-        p2 <- ggplot(df, aes(mcmc, E, fill=mcmc)) + stat_summary(fun.y='min', geom='bar') + ggtitle(paste0(name, '\nMin'))   + theme(legend.position='none') ## + ylim(c(0,ymax))
-        p3 <- ggplot(df, aes(mcmc, E, colour=mcmc)) + geom_point(size=3) + ggtitle(paste0(name, '\npoints')) + theme(legend.position='none') ## + ylim(c(0,ymax))
-        p4 <- ggplot(df, aes(mcmc, E, fill=mcmc)) + stat_summary(fun.y='mean', geom='bar')## + ylim(c(0,ymax))
-        multiplot(p1, p2, p3, p4, cols=4)
-        dev.copy2pdf(file=paste0('~/GitHub/userDistMCMC/plots/plot_', name, '.pdf'))
-    }
-}
-
-
-
-
-
-
-
-
-
-## run_suite <- function(lst, monitors=character(), niter=100000, MCMCs='nimble') {
-##     out <- MCMCsuite(
-##         lst$code, lst$constants, lst$data, lst$inits,
-##         MCMCs = MCMCs,
-##         niter = niter,
-##         monitors = monitors,
-##         summaryStats = c('mean', 'median', 'sd', 'CI95_low', 'CI95_upp', 'effectiveSize'),
-##         makePlot = FALSE)
-##     message('> timing:')
-##     print(out$timing)
-##     message('> summary statistics:')
-##     print(out$summary[, c('mean','sd','CI95_low','CI95_upp'), ])
-##     message('> effectiveSize:')
-##     print(out$summary[, 'effectiveSize', ])
-##     message('> effectiveSize / timing:')
-##     print(out$summary[, 'effectiveSize', ] / out$timing['nimble'])
-##     return(invisible(out))
-## }
