@@ -207,7 +207,7 @@ resultsObjectClassDef <- R6Class(
             message(totTime, ' minute', if(totTime==1) '' else 's')
             message('*******************************************************')
             message('*******************************************************')
-            processOutIntoDF()
+            self$processOutIntoDF()
             return(invisible(NULL))
         },
         newListEntry = function(paramNames) {
