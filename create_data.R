@@ -162,7 +162,7 @@ model {
         summaryArray[iStat, ] <- apply(ar, 2, summaryStatFunctions[[iStat]])
     }
     message('APPLYING effectiveSize() TO ', dim(ar)[1], ' JAGS SAMPLES')
-    theTime <- as.numeric(t[3] / 60)    ## this is consistent with MCMCsuite
+    theTime <- as.numeric(t[3])    ## this is consistent with MCMCsuite (now in seconds!)
     list(theTime=theTime, summary=summaryArray)
 }
 
@@ -218,7 +218,7 @@ model {
         summaryArray[iStat, ] <- apply(ar, 2, summaryStatFunctions[[iStat]])
     }
     message('APPLYING effectiveSize() TO ', dim(ar)[1], ' JAGS SAMPLES')
-    theTime <- as.numeric(t[3] / 60)    ## this is consistent with MCMCsuite
+    theTime <- as.numeric(t[3])    ## this is consistent with MCMCsuite (now in seconds!)
     list(theTime=theTime, summary=summaryArray)
 }
 
@@ -800,7 +800,7 @@ model {
         summaryArray[iStat, ] <- apply(ar, 2, summaryStatFunctions[[iStat]])
     }
     message('APPLYING effectiveSize() TO ', dim(ar)[1], ' JAGS SAMPLES')
-    theTime <- as.numeric(t[3] / 60)    ## this is consistent with MCMCsuite
+    theTime <- as.numeric(t[3])    ## this is consistent with MCMCsuite (now in seconds!)
     list(theTime=theTime, summary=summaryArray)
 }
 
@@ -961,7 +961,7 @@ model {
         summaryArray[iStat, ] <- apply(ar, 2, summaryStatFunctions[[iStat]])
     }
     message('APPLYING effectiveSize() TO ', dim(ar)[1], ' JAGS SAMPLES')
-    theTime <- as.numeric(t[3] / 60)    ## this is consistent with MCMCsuite
+    theTime <- as.numeric(t[3])    ## this is consistent with MCMCsuite (now in seconds!)
     list(theTime=theTime, summary=summaryArray)
 }
 
