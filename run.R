@@ -15,6 +15,9 @@ save(results, file='~/GitHub/userDistMCMC/resultsNew.RData')
 results$run('dipper', dipperCJS,  MCMCs = c('nimble','nimble_slice','autoBlock'), MCMCnames = c('nimbleCJS','sliceCJS','autoBlockCJS'))
 save(results, file='~/GitHub/userDistMCMC/resultsNew.RData')
 
+results$run('dipper', dipperCJS2,  MCMCs = c('nimble','nimble_slice','autoBlock'), MCMCnames = c('nimbleCJS2','sliceCJS2','autoBlockCJS2'))
+save(results, file='~/GitHub/userDistMCMC/resultsNew.RData')
+
 ##results$run('dipper', dipperChiJAGSfunction,                       MCMCnames = c('jagsChi'))
 ##save(results, file='~/GitHub/userDistMCMC/resultsNew.RData')
 

@@ -102,6 +102,40 @@ rCJS <- nimbleFunction(
 )
 
 
+## maximally efficient NIMBLE implementation for Dipper model
+dCJS2 <- nimbleFunction(
+    run = function(x = double(),
+        ##length = double(), last = double(), phi = double(), p = double(),
+        ##first = double(), last = double(), nSightings = double(), phi = double(), p = double(), logChi = double(1),
+        length = double(), nSightingsMinus1 = double(), nNonSightings = double(), log_phi = double(), log_pp = double(), log_1minusP = double(), logChi = double(),
+        log.p = double()) {
+        ##L <- 1
+        ##if(length > last)
+        ##    for(i in 1:(length-last))
+        ##        L <- 1-phi + phi*(1-p)*L
+        ##nSightings <- sum(x[1:last])
+        ##logL <- log(L) + (last-1)*log(phi) + (nSightings-1)*log(p) + (last-nSightings)*log(1-p)
+        ##
+        ##logL <- (last-first)*log(phi) + (nSightings-1)*log(p) + (last-first-nSightings+1)*log(1-p) + logChi[last]
+        logL <- length*log_phi + nSightingsMinus1*log_pp + nNonSightings*log_1minusP + logChi
+        returnType(double())
+        return(logL)
+    }
+)
+
+rCJS2 <- nimbleFunction(
+    run = function(n = integer(),
+        ##length = double(), last = double(), phi = double(), p = double())
+        ##first = double(), last = double(), nSightings = double(), phi = double(), p = double(), logChi = double(1)) {
+        length = double(), nSightingsMinus1 = double(), nNonSightings = double(), log_phi = double(), log_pp = double(), log_1minusP = double(), logChi = double()) {
+        if(n != 1) print('should only specify n=1 in rCJS2() distribution')
+        print('STILL NEED TO WRITE THE rCJS2() METHOD!')
+        returnType(double())
+        return(1)
+    }
+)
+
+
 
 registerDistributions(list(
     dDHMM = list(
@@ -118,6 +152,12 @@ registerDistributions(list(
         BUGSdist = 'dCJS(first, last, nSightings, phi, p, logChi)',
         types = c('value = double()',
             'first = double()', 'last = double()', 'nSightings = double()', 'phi = double()', 'p = double()', 'logChi = double(1)'),
+        discrete = TRUE
+    ),
+    dCJS2 = list(
+        BUGSdist = 'dCJS2(length, nSightingsMinus1, nNonSightings, log_phi, log_pp, log_1minusP, logChi)',
+        types = c('value = double()',
+            'length = double()', 'nSightingsMinus1 = double()', 'nNonSightings = double()', 'log_phi = double()', 'log_pp = double()', 'log_1minusP = double()', 'logChi = double()'),
         discrete = TRUE
     )
 ))
