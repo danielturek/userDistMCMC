@@ -27,6 +27,9 @@ save(results, file='~/GitHub/userDistMCMC/resultsNew.RData')
 results$run('orchid', orchidDHMM, MCMCs = c('nimble','autoBlock'), MCMCnames = c('nimbleDHMM','autoBlockDHMM'))
 save(results, file='~/GitHub/userDistMCMC/resultsNew.RData')
 
+results$run('orchid', orchidDHMM2, MCMCs = c('nimble','autoBlock'), MCMCnames = c('nimbleDHMM2','autoBlockDHMM2'))
+save(results, file='~/GitHub/userDistMCMC/resultsNew.RData')
+
 results$run('orchid', orchidJAGSfunction,                          MCMCnames = c('jags'))
 save(results, file='~/GitHub/userDistMCMC/resultsNew.RData')
 
@@ -42,6 +45,10 @@ save(results, file='~/GitHub/userDistMCMC/resultsNew.RData')
 
 
 
+##results$run('orchid', orchidDHMM,  MCMCs = c('nimble'), MCMCnames = c('nimbleDHMM'))
+##results$run('orchid', orchidJAGSfunction,               MCMCnames = c('jags'))
+##results$run('orchid', orchidDHMM2, MCMCs = c('nimble'), MCMCnames = c('nimbleDHMM2'))
 
-
+##results$check()
+##results$quickplot()
 
