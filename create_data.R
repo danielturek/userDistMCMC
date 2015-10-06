@@ -189,7 +189,6 @@ model {
     nSightings <- apply(y, 1, function(hist) sum(hist, na.rm=TRUE))
     zerosVector <- rep(0,nind)
     if(trunc) { ind <- 1:3;   nind<-length(ind);   first<-first[ind];   last<-last[ind];   y<-y[ind,,drop=FALSE];   nSightings<-nSightings[ind];   zerosVector<-zerosVector[ind] }
-    constants  <- list(, last=last)
     jags_data <- list(zerosVector=zerosVector, k=k, nind=nind, length=last-first, nSightingsMinus1=nSightings-1, nNonSightings=last-first-nSightings+1, last=last)
     initFunction <- function() list(phi=0.6, p=0.9)
     parameters <- c('p', 'phi')
