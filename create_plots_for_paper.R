@@ -31,28 +31,16 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
         }
     }
 }
-makePaperPlot <- function(model_arg, mcmcs, df = results$df) {
-    ##browser()
+makePaperPlot <- function(model_arg, mcmcs, df) {
     df <- filter(df, model == model_arg)
-    df$mcmc <- as.character(df$mcmc)
-    df <- df[df$mcmc != 'nimbleCJS',]               ## remove the nimble CJS alg,
-    df$mcmc[df$mcmc=='nimbleCJS2'] <- 'nimbleCJS'   ## then rename CJS2 to CJS
-    df$mcmc[df$mcmc=='jagsExp'] <- 'jags'
     df$mcmc <- as.factor(df$mcmc)
     df <- filter(df, mcmc %in% mcmcs)
-    newDF <- data.frame(mcmc = character(), Mean = numeric(), Minimum = numeric(), stringsAsFactors=FALSE)
-    for(mcmc in unique(df$mcmc)) {
-        thismean <- mean(df[df$mcmc==mcmc, 'Efficiency'])
-        thismin <- min(df[df$mcmc==mcmc, 'Efficiency'])
-        newDF <- rbind(newDF, data.frame(mcmc = mcmc, Mean = thismean, Minimum = thismin, stringsAsFactors=FALSE))
-    }
-    df <- newDF
     df$mcmc <- factor(as.character(df$mcmc), levels=mcmcs)   ## re-order, according to mcmcs argument
-    ##ymax <- max(c(df$Mean, df$Minimum))
-    p1 <- ggplot(df, aes(mcmc, Minimum, fill=mcmc)) + geom_bar(stat='identity') + theme(legend.position='none', axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x = element_blank()) + ylab('Minimum sampling efficiency')
-    p2 <- ggplot(df, aes(mcmc, Mean,    fill=mcmc)) + geom_bar(stat='identity') + theme(legend.position='none', axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x = element_blank()) + ylab('Mean sampling efficiency')
+    p1 <- ggplot(df, aes(mcmc, Minimum, fill=mcmc)) + geom_bar(stat='identity') + theme(legend.position='none', axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x = element_blank()) + ylab('Sampling efficiency (ESPS)') + ggtitle('Minimum')
+    p2 <- ggplot(df, aes(mcmc, Mean,    fill=mcmc)) + geom_bar(stat='identity') + theme(legend.position='none', axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x = element_blank()) + ylab('Sampling efficiency (ESPS)') + ggtitle('Mean')
     p4 <- ggplot(df, aes(mcmc, Mean, fill=mcmc)) + geom_bar(stat='identity') + theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x = element_blank(), axis.title.y=element_blank(), axis.text.y=element_blank(), axis.ticks.y=element_blank(), legend.position = 'left') + labs(fill='MCMC Algorithm      ')
-    dev.new(width=6, height=3)
+    wid <- if(model_arg=='goose') 6.5 else 6
+    dev.new(width=wid, height=3)
     multiplot(p1, p2,    p4, cols=3)
     localFile <- paste0('~/GitHub/userDistMCMC/plot_', model_arg, '.pdf')
     paperFile <- paste0('~/GitHub/nimble/nimblePapers/CR-MCMC/plot_', model_arg, '.pdf')
@@ -60,9 +48,31 @@ makePaperPlot <- function(model_arg, mcmcs, df = results$df) {
     system(paste0('cp ', localFile, ' ', paperFile))
 }
 
-makePaperPlot(model_arg='dipper', mcmcs = c('jags', 'jagsPoisson', 'nimble', 'nimbleCJS'))
-makePaperPlot(model_arg='orchid', mcmcs = c('jags', 'nimbleDHMM2', 'autoBlockDHMM2'))
-makePaperPlot(model_arg='goose', mcmcs = c('jags', 'nimbleDHMM', 'autoBlockDHMM'))
+df <- results$df
+newDF <- data.frame(model = character(), mcmc = character(), Mean = numeric(), Minimum = numeric(), stringsAsFactors=FALSE)
+for(mod in unique(df$model)) {
+    for(mcmc in unique(df[df$model==mod,]$mcmc)) {
+        thismean <- mean(df[df$model==mod & df$mcmc==mcmc, 'Efficiency'])
+        thismin <- min(df[df$model==mod & df$mcmc==mcmc, 'Efficiency'])
+        newDF <- rbind(newDF, data.frame(model = mod, mcmc = mcmc, Mean = thismean, Minimum = thismin, stringsAsFactors=FALSE))
+    }
+}
+df <- newDF
+df$mcmc <- as.character(df$mcmc)   ## make 'mcmc' column as character strings
+df[df$model=='dipper' & df$mcmc=='nimble', ]$mcmc <- 'Latent State'
+df[df$model=='dipper' & df$mcmc=='jags', ]$mcmc <- 'Latent State (JAGS)'
+df[df$model=='dipper' & df$mcmc=='nimbleCJS2', ]$mcmc <- 'Filtering'
+df[df$model=='dipper' & df$mcmc=='jagsPoisson', ]$mcmc <- 'Filtering (JAGS)'
+df[df$model=='orchid' & df$mcmc=='jags', ]$mcmc <- 'Latent State (JAGS)'
+df[df$model=='orchid' & df$mcmc=='nimbleDHMM2', ]$mcmc <- 'Filtering'
+df[df$model=='orchid' & df$mcmc=='autoBlockDHMM2', ]$mcmc <- 'Filtering & Blocking'
+df[df$model=='goose'  & df$mcmc=='jagsExp', ]$mcmc <- 'Latent State (JAGS)'
+df[df$model=='goose'  & df$mcmc=='nimbleDHMM', ]$mcmc <- 'Filtering (RR)'
+df[df$model=='goose'  & df$mcmc=='autoBlockDHMM', ]$mcmc <- 'Filtering & Blocking (RR)'
+
+makePaperPlot('dipper', c('Latent State', 'Latent State (JAGS)', 'Filtering', 'Filtering (JAGS)'), df)
+makePaperPlot('orchid', c('Latent State (JAGS)', 'Filtering', 'Filtering & Blocking'), df)
+makePaperPlot('goose',  c('Latent State (JAGS)', 'Filtering (RR)', 'Filtering & Blocking (RR)'), df)
 
 
 
