@@ -1055,7 +1055,7 @@ k <- dim(rCH)[2]
 f <- numeric()   ## vector with occasion of first capture 
 for (i in 1:dim(CH)[1])     f[i] <- min(which(CH[i,]!=0))
 Z <- array(c(1,0,0,0,1,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0), c(3,4,2))
-constants <- list(f=f, k=k, nind=nind, prior=c(1/3,1/3,1/3,0), condition=c(1,1,0), mult=rep(1,nind), Z=Z)
+constants <- list(f=f, k=k, nind=nind, prior=c(1/2,1/2,0,0), condition=c(1,1,0), mult=rep(1,nind), Z=Z)
 data <- list(y = rCH)
 inits <- list(s = rep(1/2,k-1), a = rep(1,3), b = rep(1,3), c = rep(1,3))
 
@@ -1156,7 +1156,7 @@ k <- dim(rCH)[2]
 f <- numeric()   ## vector with occasion of first capture 
 for (i in 1:dim(CH)[1])     f[i] <- min(which(CH[i,]!=0))
 Z      <- array(c(1,0,0,0,1,0,0,0,1,0,0,1), c(3,4))
-constants <- list(f=f, k=k, nind=nind, prior=c(1/3,1/3,1/3,0), Z=Z)
+constants <- list(f=f, k=k, nind=nind, prior=c(1/2,1/2,0,0), Z=Z)
 data <- list(y = rCH)
 inits <- list(s = rep(1/2,k-1), a = rep(1,3), b = rep(1,3), c = rep(1,3))
 
