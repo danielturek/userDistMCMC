@@ -46,6 +46,11 @@ makePaperPlot <- function(model_arg, mcmcs, df) {
     paperFile <- paste0('~/GitHub/nimble/nimblePapers/CR-MCMC/plot_', model_arg, '.pdf')
     dev.copy2pdf(file=localFile)
     system(paste0('cp ', localFile, ' ', paperFile))
+    ## adding eps files, for Biometrics submission
+    localFile <- paste0('~/GitHub/userDistMCMC/plot_', model_arg, '.eps')
+    paperFile <- paste0('~/GitHub/nimble/nimblePapers/CR-MCMC/plot_', model_arg, '.eps')
+    dev.copy2eps(file=localFile)
+    system(paste0('cp ', localFile, ' ', paperFile))
 }
 
 df <- results$df
