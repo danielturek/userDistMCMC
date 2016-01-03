@@ -80,4 +80,19 @@ makePaperPlot('orchid', c('Latent State (JAGS)', 'Filtering', 'Filtering & Block
 makePaperPlot('goose',  c('Latent State (JAGS)', 'Filtering (RR)', 'Filtering & Blocking (RR)'), df)
 
 
-
+## NEW figures for presentations on CR-MCMC
+## for Dipper model, only showing Latent State and Filtering MCMCs
+## THIS WILL OVERWRITE 'df' object !!!!!
+model_arg <- 'dipper'
+mcmcs <- c('Latent State', 'Filtering')
+df <- filter(df, model == model_arg)
+df$mcmc <- as.factor(df$mcmc)
+df <- filter(df, mcmc %in% mcmcs)
+df$mcmc <- factor(as.character(df$mcmc), levels=mcmcs)   ## re-order, according to mcmcs argument
+p1 <- ggplot(df, aes(mcmc, Minimum, fill=mcmc)) + geom_bar(stat='identity') + theme(legend.position='none', axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x = element_blank()) + ylab('Sampling efficiency (ESPS)') + ggtitle('Minimum')
+p2 <- ggplot(df, aes(mcmc, Mean,    fill=mcmc)) + geom_bar(stat='identity') + theme(legend.position='none', axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x = element_blank()) + ylab('Sampling efficiency (ESPS)') + ggtitle('Mean')
+p4 <- ggplot(df, aes(mcmc, Mean, fill=mcmc)) + geom_bar(stat='identity') + theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x = element_blank(), axis.title.y=element_blank(), axis.text.y=element_blank(), axis.ticks.y=element_blank(), legend.position = 'left') + labs(fill='MCMC Algorithm      ')
+wid <- if(model_arg=='goose') 6.5 else 6
+dev.new(width=wid, height=3)
+multiplot(p1, p2,    p4, cols=3)
+dev.copy2pdf(file='~/Downloads/dipper_samplingEfficiency.pdf')
