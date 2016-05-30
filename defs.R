@@ -362,7 +362,7 @@ results_quickplot = function(out) {
         p3 <- ggplot(df, aes(mcmc, E, colour=mcmc)) + geom_point(size=3) + ggtitle(paste0(name, '\npoints')) + theme(legend.position='none') ## + ylim(c(0,ymax))
         p4 <- ggplot(df, aes(mcmc, E, fill=mcmc)) + stat_summary(fun.y='mean', geom='bar')## + ylim(c(0,ymax))
         multiplot(p1, p2, p3, p4, cols=4)
-        ##dev.copy2pdf(file=paste0('~/GitHub/userDistMCMC/plots/plot_', name, '.pdf'))
+        ##dev.copy2pdf(file=paste0('~/github/userDistMCMC/plots/plot_', name, '.pdf'))
     }
 }
 
