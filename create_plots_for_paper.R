@@ -21,28 +21,32 @@ df <- results$df
 df$mcmc <- as.character(df$mcmc)   ## make 'mcmc' column as character strings
 df[df$model=='dipper' & df$mcmc=='nimble', ]$mcmc <- 'Latent State'
 df[df$model=='dipper' & df$mcmc=='jags', ]$mcmc <- 'Latent State (JAGS)'
-df[df$model=='dipper' & df$mcmc=='nimbleCJS2', ]$mcmc <- 'Filtering'
-df[df$model=='dipper' & df$mcmc=='jagsPoisson', ]$mcmc <- 'Filtering (JAGS)'
+df[df$model=='dipper' & df$mcmc=='nimbleCJS2', ]$mcmc <- 'Filter'
+df[df$model=='dipper' & df$mcmc=='jagsPoisson', ]$mcmc <- 'Filter (JAGS)'
 df[df$model=='orchid' & df$mcmc=='jags', ]$mcmc <- 'Latent State (JAGS)'
-df[df$model=='orchid' & df$mcmc=='nimbleDHMM2', ]$mcmc <- 'Filtering'
-df[df$model=='orchid' & df$mcmc=='autoBlockDHMM2', ]$mcmc <- 'Filtering & Blocking'
+df[df$model=='orchid' & df$mcmc=='nimbleDHMM2', ]$mcmc <- 'Filter'
+df[df$model=='orchid' & df$mcmc=='autoBlockDHMM2', ]$mcmc <- 'Filter & Block'
 df[df$model=='goose'  & df$mcmc=='jagsExp', ]$mcmc <- 'Latent State (JAGS)'
-df[df$model=='goose'  & df$mcmc=='nimbleDHMM', ]$mcmc <- 'Filtering (RR)'
-df[df$model=='goose'  & df$mcmc=='autoBlockDHMM', ]$mcmc <- 'Filtering & Blocking (RR)'
-dipperMCMCs <- c('Latent State', 'Latent State (JAGS)', 'Filtering', 'Filtering (JAGS)')
-orchidMCMCs <- c('Latent State (JAGS)', 'Filtering', 'Filtering & Blocking')
-gooseMCMCs <- c('Latent State (JAGS)', 'Filtering (RR)', 'Filtering & Blocking (RR)')
-dipperWidth <- 7
-orchidWidth <- 7
-gooseWidth  <- 7
-makePaperPlot2 <- function(model_arg, mcmcs, thiswidth, thisdf) {
+df[df$model=='goose'  & df$mcmc=='nimbleDHMM', ]$mcmc <- 'Filter (RR)'
+df[df$model=='goose'  & df$mcmc=='autoBlockDHMM', ]$mcmc <- 'Filter & Block (RR)'
+dipperMCMCs <- c('Latent State', 'Latent State (JAGS)', 'Filter', 'Filter (JAGS)')
+orchidMCMCs <- c('Latent State (JAGS)', 'Filter', 'Filter & Block')
+gooseMCMCs <- c('Latent State (JAGS)', 'Filter (RR)', 'Filter & Block (RR)')
+dipperWidth <- 6.7
+orchidWidth <- 6.7
+gooseWidth  <- 6.7
+dipperBarWidth <- 0.9
+orchidBarWidth <- 0.8
+gooseBarWidth <- 0.8
+makePaperPlot2 <- function(model_arg, mcmcs, thiswidth, thisBarWidth, thisdf) {
     thisdf <- filter(thisdf, model == model_arg)
     thisdf$mcmc <- as.factor(thisdf$mcmc)
     thisdf <- filter(thisdf, mcmc %in% mcmcs)
     thisdf$mcmc <- factor(as.character(thisdf$mcmc), levels=mcmcs)   ## re-order, according to mcmcs argument
-    p1 <- ggplot(thisdf, aes(mcmc, Efficiency, fill=mcmc), xlab='') + stat_summary(fun.y='min', geom='bar') + ggtitle('Minimum') + ylab('Sampling efficiency (ESPS)') + theme(legend.position='none', axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x = element_blank())
-    p2 <- ggplot(thisdf, aes(mcmc, Efficiency, fill=mcmc), xlab='') + stat_summary(fun.y='mean', geom='bar') + ggtitle('Mean') + ylab('Sampling efficiency (ESPS)') + theme(legend.position='none', axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x = element_blank())
-    p3 <- ggplot(thisdf, aes(mcmc, Efficiency, colour=mcmc), xlab='') + geom_point(size=1) + ggtitle('Values') + ylab('Sampling efficiency (ESPS)') + theme(legend.position='none', axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x = element_blank())
+    p1 <- ggplot(thisdf, aes(mcmc, Efficiency, fill=mcmc), xlab='') + stat_summary(fun.y='min', geom='bar', width=thisBarWidth) + ggtitle('Minimum') + ylab('Sampling efficiency (ESPS)') + theme(legend.position='none', axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x = element_blank())
+    p2 <- ggplot(thisdf, aes(mcmc, Efficiency, fill=mcmc), xlab='') + stat_summary(fun.y='mean', geom='bar', width=thisBarWidth) + ggtitle('Mean') + ylab('Sampling efficiency (ESPS)') + theme(legend.position='none', axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x = element_blank())
+    ##p3 <- ggplot(thisdf, aes(mcmc, Efficiency, colour=mcmc), xlab='') + geom_point(size=1) + ggtitle('Values') + ylab('Sampling efficiency (ESPS)') + theme(legend.position='none', axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x = element_blank())
+    p3 <- ggplot(thisdf, aes(mcmc, Efficiency, colour=mcmc), xlab='') + geom_boxplot(width=0.6) + ggtitle('Boxplot') + ylab('Sampling efficiency (ESPS)') + theme(legend.position='none', axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x = element_blank())
     p4 <- ggplot(thisdf, aes(mcmc, Efficiency, fill=mcmc)) + geom_bar(stat='identity') + theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x = element_blank(), axis.title.y=element_blank(), axis.text.y=element_blank(), axis.ticks.y=element_blank(), legend.position = 'left') + labs(fill='MCMC Algorithm     ')
     dev.new(width=thiswidth, height=3)
     multiplot(p1, p2, p3, p4, cols=4)
@@ -51,9 +55,9 @@ makePaperPlot2 <- function(model_arg, mcmcs, thiswidth, thisdf) {
     dev.copy2pdf(file=localFile)
     system(paste0('cp ', localFile, ' ', paperFile))
 }
-makePaperPlot2('dipper', dipperMCMCs, dipperWidth, df)
-makePaperPlot2('orchid', orchidMCMCs, orchidWidth, df)
-makePaperPlot2('goose',  gooseMCMCs,  gooseWidth,  df)
+makePaperPlot2('dipper', dipperMCMCs, dipperWidth, dipperBarWidth, df)
+makePaperPlot2('orchid', orchidMCMCs, orchidWidth, orchidBarWidth, df)
+makePaperPlot2('goose',  gooseMCMCs,  gooseWidth,  gooseBarWidth, df)
 
 
 ## original paper plots for first submissions to Biometrics, EES, etc.
