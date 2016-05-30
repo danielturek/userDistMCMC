@@ -2,7 +2,7 @@
 
 library(ggplot2)
 library(dplyr)
-load('~/GitHub/userDistMCMC/results.RData')
+load('~/github/userDistMCMC/results.RData')
 multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
     library(grid)
     ## Make a list from the ... arguments and plotlist
@@ -42,13 +42,13 @@ makePaperPlot <- function(model_arg, mcmcs, df) {
     wid <- if(model_arg=='goose') 6.5 else 6
     dev.new(width=wid, height=3)
     multiplot(p1, p2,    p4, cols=3)
-    localFile <- paste0('~/GitHub/userDistMCMC/plot_', model_arg, '.pdf')
-    paperFile <- paste0('~/GitHub/nimble/nimblePapers/CR-MCMC/plot_', model_arg, '.pdf')
+    localFile <- paste0('~/github/userDistMCMC/plot_', model_arg, '.pdf')
+    paperFile <- paste0('~/github/nimble/nimblePapers/CR-MCMC/plot_', model_arg, '.pdf')
     dev.copy2pdf(file=localFile)
     system(paste0('cp ', localFile, ' ', paperFile))
     ## adding eps files, for Biometrics submission
-    localFile <- paste0('~/GitHub/userDistMCMC/plot_', model_arg, '.eps')
-    paperFile <- paste0('~/GitHub/nimble/nimblePapers/CR-MCMC/plot_', model_arg, '.eps')
+    localFile <- paste0('~/github/userDistMCMC/plot_', model_arg, '.eps')
+    paperFile <- paste0('~/github/nimble/nimblePapers/CR-MCMC/plot_', model_arg, '.eps')
     dev.copy2eps(file=localFile)
     system(paste0('cp ', localFile, ' ', paperFile))
 }

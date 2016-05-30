@@ -3,7 +3,7 @@
 ## dipper
 ############################
 
-load('~/GitHub/userDistMCMC/dipperData.RData')
+load('~/github/userDistMCMC/dipperData.RData')
 ## optionally truncate data:
 last <- apply(y, 1, function(hist) max(which(hist==1)))
 nSightings <- apply(y, 1, function(hist) sum(hist, na.rm=TRUE))
@@ -126,7 +126,7 @@ model {
 }
 ',fill=TRUE) 
     sink()
-    load('~/GitHub/userDistMCMC/dipperData.RData')
+    load('~/github/userDistMCMC/dipperData.RData')
     ## optionally truncate data:
     last <- apply(y, 1, function(hist) max(which(hist==1)))
     yDHMM <- 2 - y
@@ -183,7 +183,7 @@ model {
 }
 ',fill=TRUE) 
     sink()
-    load('~/GitHub/userDistMCMC/dipperData.RData')
+    load('~/github/userDistMCMC/dipperData.RData')
     ## optionally truncate data:
     last <- apply(y, 1, function(hist) max(which(hist==1)))
     nSightings <- apply(y, 1, function(hist) sum(hist, na.rm=TRUE))
@@ -812,7 +812,7 @@ model {
 ## orchid (multistate, from Kery & Schaub, uses stochastic indexing => jags only!)
 ## (9.7. Real data example: the showy lady's slipper)
 orchidJAGSfunction <- function(niter = 100000) {
-    CH <- as.matrix(read.table("~/GitHub/userDistMCMC/orchids.txt", sep=" ", header = FALSE))
+    CH <- as.matrix(read.table("~/github/userDistMCMC/orchids.txt", sep=" ", header = FALSE))
     ## optionally truncate data:
     if(trunc) {     ind <- 1:5;     CH <- CH[ind,]     }
     n_occasions <- dim(CH)[2]
@@ -1041,7 +1041,7 @@ code <- quote({
     }
 })
 
-CH <- as.matrix(read.table("~/GitHub/userDistMCMC/orchids.txt", sep=" ", header = FALSE))
+CH <- as.matrix(read.table("~/github/userDistMCMC/orchids.txt", sep=" ", header = FALSE))
 ## first, remove all individuals not seen until the last occasion:
 f <- numeric()
 for (i in 1:dim(CH)[1])     f[i] <- min(which(CH[i,]!=0))
@@ -1142,7 +1142,7 @@ code <- quote({
     }
 })
 
-CH <- as.matrix(read.table("~/GitHub/userDistMCMC/orchids.txt", sep=" ", header = FALSE))
+CH <- as.matrix(read.table("~/github/userDistMCMC/orchids.txt", sep=" ", header = FALSE))
 ## first, remove all individuals not seen until the last occasion:
 f <- numeric()
 for (i in 1:dim(CH)[1])     f[i] <- min(which(CH[i,]!=0))
@@ -1180,7 +1180,7 @@ save(dipper,
      orchidJAGSfunction,
      orchidDHMM,
      orchidDHMM2,
-     file = '~/GitHub/userDistMCMC/models.RData')
+     file = '~/github/userDistMCMC/models.RData')
 
 
 
