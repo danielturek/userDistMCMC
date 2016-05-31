@@ -319,6 +319,14 @@ mult <- c(
     3,
     13)
 
-save(list=c('y', 'mult'), file='~/github/userDistMCMC/gooseData.R')
+
+
+y[which(y == 0)] <- 4
+first <- apply(y, 1, function(hist) which(hist!=4)[1])
+nind <- dim(y)[1]
+k <- dim(y)[2]
+
+
+save(list=c('y', 'mult', 'first', 'k', 'nind'), file='~/github/userDistMCMC/gooseData.RData')
 
 
