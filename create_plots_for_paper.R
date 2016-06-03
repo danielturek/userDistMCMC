@@ -32,7 +32,7 @@ df[df$model=='goose'  & df$mcmc=='autoBlockDHMM', ]$mcmc <- 'Filter & Block (RR)
 dipperMCMCs <- c('Latent State', 'Latent State (JAGS)', 'Filter', 'Filter (JAGS)')
 orchidMCMCs <- c('Latent State (JAGS)', 'Filter', 'Filter & Block')
 gooseMCMCs <- c('Latent State (JAGS)', 'Filter (RR)', 'Filter & Block (RR)')
-dipperWidth <- 6.7
+dipperWidth <- 5.5
 orchidWidth <- 6.7
 gooseWidth  <- 6.7
 dipperBarWidth <- 0.9
@@ -60,9 +60,34 @@ makePaperPlot2 <- function(model_arg, mcmcs, thiswidth, thisBarWidth, thisdf) {
     dev.copy2eps(file=localFile)
     system(paste0('cp ', localFile, ' ', paperFile))
 }
-makePaperPlot2('dipper', dipperMCMCs, dipperWidth, dipperBarWidth, df)
+##makePaperPlot2('dipper', dipperMCMCs, dipperWidth, dipperBarWidth, df)
 makePaperPlot2('orchid', orchidMCMCs, orchidWidth, orchidBarWidth, df)
 makePaperPlot2('goose',  gooseMCMCs,  gooseWidth,  gooseBarWidth, df)
+makePaperPlot2_dipper <- function(thiswidth, thisBarWidth, thisdf) {
+    model_arg <- 'dipper'
+    mcmcs <- c('Latent State', 'Latent State (JAGS)', 'Filter', 'Filter (JAGS)')
+    thisdf <- filter(thisdf, model == model_arg)
+    thisdf$mcmc <- as.factor(thisdf$mcmc)
+    thisdf <- filter(thisdf, mcmc %in% mcmcs)
+    thisdf$mcmc <- factor(as.character(thisdf$mcmc), levels=mcmcs)   ## re-order, according to mcmcs argument
+    p1 <- ggplot(filter(thisdf, param=='phi'), aes(mcmc, Efficiency, fill=mcmc), xlab='') + geom_bar(stat='identity', width=thisBarWidth) + ggtitle(expression(italic(phi))) + ylab('Sampling efficiency (ESPS)') + theme(legend.position='none', axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x = element_blank()) + theme(plot.title=element_text(angle=-20, size=15, margin=margin(0,0,4,0)))
+    p2 <- ggplot(filter(thisdf, param=='p'), aes(mcmc, Efficiency, fill=mcmc), xlab='') + geom_bar(stat='identity', width=thisBarWidth) + ggtitle(expression(italic(p))) + ylab('Sampling efficiency (ESPS)') + theme(legend.position='none', axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x = element_blank()) + theme(plot.title=element_text(size=14, margin = margin(3,0,6,0)))
+    p4 <- ggplot(thisdf, aes(mcmc, Efficiency, fill=mcmc)) + geom_bar(stat='identity') + theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x = element_blank(), axis.title.y=element_blank(), axis.text.y=element_blank(), axis.ticks.y=element_blank(), legend.position = 'left') + labs(fill='MCMC Algorithm     ')
+    dev.new(width=thiswidth, height=3)
+    multiplot(p1, p2,     p4, cols=3)
+    ##localFile <- paste0('~/github/userDistMCMC/plot_', model_arg, '.pdf')
+    ##paperFile <- paste0('~/github/nimble/nimblePapers/CR-MCMC/EES_revision/plot_', model_arg, '.pdf')
+    ##dev.copy2pdf(file=localFile)
+    ##system(paste0('cp ', localFile, ' ', paperFile))
+    ## eps files (required for final submission to EES)
+    localFile <- paste0('~/github/userDistMCMC/plot_', model_arg, '.eps')
+    paperFile <- paste0('~/github/nimble/nimblePapers/CR-MCMC/EES_revision/plot_', model_arg, '.eps')
+    dev.copy2eps(file=localFile)
+    system(paste0('cp ', localFile, ' ', paperFile))
+}
+makePaperPlot2_dipper(dipperWidth, dipperBarWidth, df)
+
+
 
 
 ## original paper plots for first submissions to Biometrics, EES, etc.
